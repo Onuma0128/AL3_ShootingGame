@@ -29,8 +29,6 @@ public:
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	/// <param name="model">モデル</param>
-	/// <param name="textureHandle">テクスチャハンドル</param>
 	void Initialize(Model* model, uint32_t textureHandle);
 	void SetPlayer(Player* player) { player_ = player; }
 	void SetEnemyPosition(const Vector3& pos);

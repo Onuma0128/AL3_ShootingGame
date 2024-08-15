@@ -26,6 +26,7 @@ void Player::Initialize(Model* model, uint32_t textureHandle, Vector3 playerPos)
 	uint32_t textureReticle = TextureManager::Load("2dReticle.png");
 	//スプライト生成
 	sprite2DReticle_ = Sprite::Create(textureReticle, Vector2{640.0f, 360.0f}, Vector4{0.0f, 0.0f, 0.0f, 1.0f}, Vector2{0.5f, 0.5f});
+	targetReticleTima_ = 0.0f;
 	isTargetingEnemy_ = false;
 }
 
@@ -49,7 +50,25 @@ void Player::Update(const ViewProjection& viewProjection) {
 		}
 		return false;
 	});
+	// Playerの移動処理と移動制限
+	PlayerMove();
 
+	// 2DReticleと3DReticleの座標計算
+	ReticleUpdate(viewProjection);
+
+	// ReticleとEnemyの当たり判定
+	ReticleCollision(viewProjection);
+
+	// PlayerParameterのImGui
+	PlayerParameter();
+
+	// 弾更新
+	for (PlayerBullet* bullet : bullets_) {
+		bullet->Update();
+	}
+}
+
+void Player::PlayerMove() {
 	// キャラクターの移動ベクトル
 	Vector3 move = {0, 0, 0};
 	// キャラクターの移動速さ
@@ -71,54 +90,45 @@ void Player::Update(const ViewProjection& viewProjection) {
 
 	// 座標移動(ベクトルの加算)
 	worldTransform_.translation_ = Add(worldTransform_.translation_, move);
-	// スケーリング行列の作成
-	worldTransform_.matWorld_ = MakeAfineMatrix(worldTransform_.scale_, worldTransform_.rotation_, worldTransform_.translation_);
-	// キャラクターの座標を画面表示する処理
-	ImGui::Begin("Player");
-	inputFloat3[0] = worldTransform_.translation_.x;
-	inputFloat3[1] = worldTransform_.translation_.y;
-	inputFloat3[2] = worldTransform_.translation_.z;
-	ImGui::InputFloat3("InputFloat3", inputFloat3);
-	ImGui::SliderFloat3("SliderFloat3", inputFloat3, -50.0f, 50.0f);
-	worldTransform_.translation_.x = inputFloat3[0];
-	worldTransform_.translation_.y = inputFloat3[1];
-	worldTransform_.translation_.z = inputFloat3[2];
-	ImGui::End();
 	// 行列を定数バッファに転送
 	worldTransform_.UpdateMatrix();
+}
 
-	Vector2 spritePosition = sprite2DReticle_->GetPosition();
+void Player::ReticleUpdate(const ViewProjection& viewProjection) {
+	// 2DReticleの移動処理
+	spritePosition_ = sprite2DReticle_->GetPosition();
 	XINPUT_STATE joyState;
 	if (Input::GetInstance()->GetJoystickState(0, joyState)) {
-		spritePosition.x += (float)joyState.Gamepad.sThumbRX / SHRT_MAX * 10.0f;
-		spritePosition.y -= (float)joyState.Gamepad.sThumbRY / SHRT_MAX * 10.0f;
+		spritePosition_.x += (float)joyState.Gamepad.sThumbRX / SHRT_MAX * 10.0f;
+		spritePosition_.y -= (float)joyState.Gamepad.sThumbRY / SHRT_MAX * 10.0f;
 
-		sprite2DReticle_->SetPosition(spritePosition);
+		sprite2DReticle_->SetPosition(spritePosition_);
 	}
 
 	// 3Dレティクルの位置計算
 	Matrix4x4 matViewport = MakeViewportMatrix(0, 0, WinApp::kWindowWidth, WinApp::kWindowHeight, 0.0f, 1.0f);
-	//Matrix4x4 matInverseVPV = Inverse((viewProjection.matView * viewProjection.matProjection) * matViewport);
-	Matrix4x4 matInverseVPV = Inverse(matViewport) * Inverse(viewProjection.matProjection)/* * Inverse(viewProjection.matView)*/;
-	Vector3 posNear = Vector3(spritePosition.x, spritePosition.y, 0.0f);
-	Vector3 posFar = Vector3(spritePosition.x, spritePosition.y, 1.0f);
+	// Matrix4x4 matInverseVPV = Inverse((viewProjection.matView * viewProjection.matProjection) * matViewport);
+	Matrix4x4 matInverseVPV = Inverse(matViewport) * Inverse(viewProjection.matProjection);
+	Vector3 posNear = Vector3(spritePosition_.x, spritePosition_.y, 0.0f);
+	Vector3 posFar = Vector3(spritePosition_.x, spritePosition_.y, 1.0f);
 	posNear = Transform(posNear, matInverseVPV);
 	posFar = Transform(posFar, matInverseVPV);
 	Vector3 mouseDirection = Subtract(posFar, posNear);
 	mouseDirection = Normalize(mouseDirection);
+	// カメラからの距離
 	const float kDistanceTextObject = 100.0f;
 	worldTransform3DReticle_.translation_ = Add(posNear, Multiply(kDistanceTextObject, mouseDirection));
 	worldTransform3DReticle_.UpdateMatrix();
 
-	ImGui::Begin("Reticle3D");
-	ImGui::Text("x:%f,y:%f,z:%f", 
-		worldTransform3DReticle_.translation_.x, 
-		worldTransform3DReticle_.translation_.y, 
-		worldTransform3DReticle_.translation_.z
-	);
-	ImGui::End();
+	targetReticleTima_--;
+	if (targetReticleTima_ <= 0.0f) {
+		targetReticleTima_ = 0.0f;
+	}
+}
 
+void Player::ReticleCollision(const ViewProjection& viewProjection) {
 	// ビュー行列とプロジェクション行列、ビューポート行列を合成する
+	Matrix4x4 matViewport = MakeViewportMatrix(0, 0, WinApp::kWindowWidth, WinApp::kWindowHeight, 0.0f, 1.0f);
 	Matrix4x4 matViewProjectionViewport = viewProjection.matView * viewProjection.matProjection * matViewport;
 
 	// 敵ターゲットのフラグの初期化
@@ -130,10 +140,13 @@ void Player::Update(const ViewProjection& viewProjection) {
 		// 敵をスクリーン座標に変換
 		positionEnemy = Transform(positionEnemy, matViewProjectionViewport);
 		// スクリーン座標の衝突判定
-		bool isColliding = CheckCollisionCircleCircle(Vector3{spritePosition.x, spritePosition.y, 0.0f}, 16, positionEnemy, 16);
+		bool isColliding = CheckCollisionCircleCircle(Vector3{spritePosition_.x, spritePosition_.y, 0.0f}, 16, positionEnemy, 16);
 		if (isColliding) {
-			isTargetingEnemy_ = true;
-			enemy->SetIsTargetingEnemy(isTargetingEnemy_);
+			worldTransform3DReticle_.translation_ = enemy->GetWorldPosition();
+			if (targetReticleTima_ == 0.0f) {
+				isTargetingEnemy_ = true;
+				enemy->SetIsTargetingEnemy(isTargetingEnemy_);
+			}
 		}
 		// セッターで入れた敵のフラグがtrueなら
 		if (enemy->GetIsTargetingEnemy()) {
@@ -144,34 +157,33 @@ void Player::Update(const ViewProjection& viewProjection) {
 	// キャラクターの攻撃処理
 	if (isTargetingEnemy_) {
 		// ターゲットしている場合はターゲットした敵に弾を発射
-		TargetAttack(); 
+		TargetAttack();
 	} else {
 		// ターゲットしていない場合はレティクルに向けて弾を発射
 		Attack();
 	}
-
-	// 弾更新
-	for (PlayerBullet* bullet : bullets_) {
-		bullet->Update();
-	}
 }
 
-void Player::onCollision() {}
+void Player::PlayerParameter() {
+	// PlayerParameter
+	ImGui::Begin("GameParameter");
+	// Player
+	ImGui::Text("Player");
+	ImGui::Text("x:%f,y:%f,z:%f",
+		worldTransform_.translation_.x,
+		worldTransform_.translation_.y,
+		worldTransform_.translation_.z
+	);
 
-float Player::GetRadius() { return 1.0f; }
-
-void Player::Draw(ViewProjection& viewProjection) {
-	// 3Dモデルを描画
-	model_->Draw(worldTransform_, viewProjection, textureHandle_);
-	model_->Draw(worldTransform3DReticle_, viewProjection, textureHandle_);
-	// 弾描画
-	for (PlayerBullet* bullet : bullets_) {
-		bullet->Draw(viewProjection);
-	}
-}
-
-void Player::DrawUI() { 
-	sprite2DReticle_->Draw();
+	ImGui::Text("targetReticleTima\n%f", targetReticleTima_);
+	// PlayerReticle
+	ImGui::Text("Reticle3D");
+	ImGui::Text("x:%f,y:%f,z:%f", 
+		worldTransform3DReticle_.translation_.x, 
+		worldTransform3DReticle_.translation_.y, 
+		worldTransform3DReticle_.translation_.z
+	);
+	ImGui::End();
 }
 
 void Player::Attack() {
@@ -212,11 +224,13 @@ void Player::TargetAttack() {
 				Vector3 velocity(0, 0, kBulletSpeed);
 				// 敵のワールド座標を取得
 				Vector3 enemyWorldPos = enemy->GetWorldPosition();
-				// ビュー行列で敵の座標を変換（カメラ座標系にする）
-				Matrix4x4 viewMatrix = railCamera_->GetViewProjection().matView;  // カメラのビュー行列
-				Vector3 enemyCameraPos = Transform(enemyWorldPos, viewMatrix);				
+				// ビュー行列で敵の座標を変換
+				Matrix4x4 viewMatrix = railCamera_->GetViewProjection().matView;
+				Vector3 enemyCameraPos = Transform(enemyWorldPos, viewMatrix);	
 				// 弾を生成し、初期化
 				BulletInitialize(kBulletSpeed, enemyCameraPos, velocity);
+				enemy->SetIsTargetingEnemy(false);
+				targetReticleTima_ = 300.0f;
 			}
 		}
 	}
@@ -235,4 +249,22 @@ void Player::BulletInitialize(float bulletSpeed, Vector3 worldPosition, Vector3 
 
 	// 弾を登録する
 	bullets_.push_back(newBullet);
+}
+
+void Player::onCollision() {}
+
+float Player::GetRadius() { return 1.0f; }
+
+void Player::Draw(ViewProjection& viewProjection) {
+	// 3Dモデルを描画
+	model_->Draw(worldTransform_, viewProjection, textureHandle_);
+	/*model_->Draw(worldTransform3DReticle_, viewProjection, textureHandle_);*/
+	// 弾描画
+	for (PlayerBullet* bullet : bullets_) {
+		bullet->Draw(viewProjection);
+	}
+}
+
+void Player::DrawUI() { 
+	sprite2DReticle_->Draw();
 }

@@ -24,8 +24,8 @@ void PlayerBullet::SetParent(const WorldTransform* parent) {
 }
 
 void PlayerBullet::Update() {
-	worldTransform_.UpdateMatrix();
 	worldTransform_.translation_ = Add(velocity_, worldTransform_.translation_);
+	worldTransform_.UpdateMatrix();
 	// 時間経過でデス
 	if (--deathTimer_ <= 0) {
 		isDead_ = true;

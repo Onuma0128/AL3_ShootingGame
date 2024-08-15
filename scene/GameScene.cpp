@@ -73,12 +73,12 @@ void GameScene::LoadEnemyPopData() {
 	file.open("Resources/enemyPop.csv");
 	assert(file.is_open());
 	//ファイルの内容を文字列ストリームにコピー
-	enemyPopCommands << file.rdbuf();
+	enemyPopCommands_ << file.rdbuf();
 	//ファイルを閉じる
 	file.close();
 }
 
-void GameScene::UpdateEnemyPopCommands() { 
+void GameScene::UpdateEnemyPopCommands(std::stringstream& enemyPopCommands) { 
 	if (waitEnemy_) {
 		waitTime_--;
 		if (waitTime_ <= 0) {
@@ -119,7 +119,7 @@ void GameScene::UpdateEnemyPopCommands() {
 			enemy_->Initialize(model_, textureHandle_);
 			enemy_->SetGameScene(this);
 			enemy_->SetPlayer(player_);
-			enemy_->SetEnemyPosition(Vector3(x, y, z));
+			enemy_->SetEnemyPosition(Vector3(x, y, z) + railCamera_->GetWorldTransform().translation_);
 			enemys_.push_back(enemy_);
 
 		} else if (word.find("WAIT") == 0) {
@@ -170,7 +170,9 @@ void GameScene::Update() {
 	// 自キャラの更新
 	player_->Update(railCamera_->GetViewProjection());
 
-	UpdateEnemyPopCommands();
+	// 敵のcsvファイル読み込み
+	UpdateEnemyPopCommands(enemyPopCommands_);
+
 	// デスフラグの立った敵を削除
 	// 敵キャラの更新
 	enemys_.remove_if([](Enemy* enemy) {

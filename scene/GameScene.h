@@ -46,7 +46,7 @@ public: // メンバ関数
 	/// <summary>
 	/// 敵発生コマンドの更新
 	/// </summary>
-	void UpdateEnemyPopCommands();
+	void UpdateEnemyPopCommands(std::stringstream& enemyPopCommands);
 
 	/// <summary>
 	/// 敵弾を追加する
@@ -98,7 +98,7 @@ private: // メンバ変数
 	bool waitEnemy_;
 	std::list<Enemy*> enemys_;
 	//敵発生コマンド
-	std::stringstream enemyPopCommands;
+	std::stringstream enemyPopCommands_;
 	//  複数弾
 	std::list<EnemyBullet*> enemyBullets_;
 	// 発射タイマー
