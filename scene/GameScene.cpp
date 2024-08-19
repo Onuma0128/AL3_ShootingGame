@@ -14,11 +14,15 @@ GameScene::~GameScene() {
 	delete skydome_;
 	delete modelSkydome_;
 	delete railCamera_;
+	delete modelParticle_;
 	for (Enemy* enemy : enemys_) {
 		delete enemy;
 	}
 	for (EnemyBullet* bullet : enemyBullets_) {
 		delete bullet;
+	}
+	for (Particle* particle : particles_) {
+		delete particle;
 	}
 }
 
@@ -42,14 +46,14 @@ void GameScene::Initialize() {
 	AxisIndicator::GetInstance()->SetVisible(true);
 	// 軸方向表示が参照するビュープロジェクションを指定する
 	AxisIndicator::GetInstance()->SetTargetViewProjection(&viewProjection_);
-	//天球の生成
+	// 天球の生成
 	skydome_ = new Skydome();
-	//3Dモデルの生成
+	// 3Dモデルの生成
 	modelSkydome_ = Model::CreateFromOBJ("skydome", true);
-	//天球の初期化
+	// 天球の初期化
 	skydome_->Initialize(modelSkydome_);
-	//レールカメラの生成
-	railCamera_ = new RailCamera(); 
+	// レールカメラの生成
+	railCamera_ = new RailCamera();
 	railCamera_->Initialize();
 	// 自キャラとレールカメラの親子関係を結ぶ
 	player_->SetParent(&railCamera_->GetWorldTransform());
@@ -57,9 +61,18 @@ void GameScene::Initialize() {
 	Vector3 playerPosition(0, 0, 50);
 	player_->Initialize(model_, textureHandle_, playerPosition);
 
-	LoadEnemyPopData();
+	std::string enemyDataFilePath[3]{
+		"Resources/enemyPop1.csv",
+		"Resources/enemyPop2.csv",
+		"Resources/enemyPop3.csv"
+	};
+	for (int i = 0; i < 3; i++) {
+		LoadEnemyPopData(enemyDataFilePath[i], enemyPopCommands_[i]);
+	}
 	//レティクルのテクスチャ
 	TextureManager::Load("2dReticle.png");
+	modelParticle_ = Model::CreateFromOBJ("enemyExplosion", true);
+	praticleTexture_ = TextureManager::Load("white1x1.png");
 }
 
 void GameScene::AddEnemyBullet(Enemy* enemy) {
@@ -67,13 +80,13 @@ void GameScene::AddEnemyBullet(Enemy* enemy) {
 	enemys_.push_back(enemy);
 }
 
-void GameScene::LoadEnemyPopData() {
+void GameScene::LoadEnemyPopData(std::string& filePath, std::stringstream& enemyPopCommands) {
 	//ファイルを開く
 	std::ifstream file;
-	file.open("Resources/enemyPop.csv");
+	file.open(filePath);
 	assert(file.is_open());
 	//ファイルの内容を文字列ストリームにコピー
-	enemyPopCommands_ << file.rdbuf();
+	enemyPopCommands << file.rdbuf();
 	//ファイルを閉じる
 	file.close();
 }
@@ -170,11 +183,49 @@ void GameScene::Update() {
 	// 自キャラの更新
 	player_->Update(railCamera_->GetViewProjection());
 
-	// 敵のcsvファイル読み込み
-	UpdateEnemyPopCommands(enemyPopCommands_);
+	// 敵のcsvファイル読み込みとシーン切り替え
+	switch (enemyScene) {
+	case EnemyScene::Stage1:
+		UpdateEnemyPopCommands(enemyPopCommands_[0]);
+		break;
+	case EnemyScene::Stage2:
+		UpdateEnemyPopCommands(enemyPopCommands_[1]);
+		break;
+	case EnemyScene::Stage3:
+		UpdateEnemyPopCommands(enemyPopCommands_[2]);
+		break;
+	default:
+		break;
+	}
+
+	// 敵の更新とパーティクルの初期化
+	for (Enemy* enemy : enemys_) {
+		enemy->Update(railCamera_->GetViewProjection());
+		if (enemy->IsDead()) {
+			Particle* newParticle = new Particle();
+			newParticle->Initialize(modelParticle_, praticleTexture_, enemy->GetWorldPosition(), 10, 600.0f);
+			particles_.push_back(newParticle);
+		}
+	}
+	// 敵弾の更新とパーティクルの初期化
+	for (EnemyBullet* bullet : enemyBullets_) {
+		bullet->Update();
+		if (bullet->IsDead()) {
+			Particle* newParticle = new Particle();
+			newParticle->Initialize(modelParticle_, praticleTexture_, bullet->GetWorldPosition(), 5, 300.0f);
+			particles_.push_back(newParticle);
+		}
+	}
+
+	// パーティクルの更新
+	for (Particle* particle : particles_) {
+		particle->Update();
+	}
+	// 条件が揃ったら次のシーンに移動
+	UpdateAndCheckScene(EnemyScene::Stage1, EnemyScene::Stage2);
+	UpdateAndCheckScene(EnemyScene::Stage2, EnemyScene::Stage3);
 
 	// デスフラグの立った敵を削除
-	// 敵キャラの更新
 	enemys_.remove_if([](Enemy* enemy) {
 		if (enemy->IsDead()) {
 			delete enemy;
@@ -190,19 +241,55 @@ void GameScene::Update() {
 		}
 		return false;
 	});
-	for (Enemy* enemy : enemys_) {
-		enemy->Update(railCamera_->GetViewProjection());
-	}
+	particles_.remove_if([](Particle* particle) {
+		if (!particle->IsActive()) {
+			delete particle;
+			return true;
+		}
+		return false;
+	});
 	Timer_--;
 	if (Timer_ < 0) {
 		Fire();
 		Timer_ = kFireInterval;
 	}
-	for (EnemyBullet* bullet : enemyBullets_) {
-		bullet->Update();
-	}
 	player_->SetEnemy(enemys_);
 	player_->SetRailCamera(railCamera_);
+}
+
+void GameScene::UpdateAndCheckScene(EnemyScene currentScene, EnemyScene nextScene) {
+	bool sceneChanged = false;
+
+	if (enemyScene == currentScene && !sceneChanged) {
+		for (Enemy* enemy : enemys_) {
+			if (railCamera_->GetWorldTransform().translation_.z > enemy->GetWorldPosition().z) {
+				enemyScene = nextScene;
+				sceneChanged = true; // フラグを立てる
+			}
+		}
+		if (sceneChanged) {
+			for (Enemy* enemy : enemys_) {
+				enemy->onCollision();
+			}
+		}
+		if (!enemys_.empty()) {
+			bool allEnemiesDead = true; // 全ての敵が死んでいるかを確認するフラグ
+
+			for (Enemy* enemy : enemys_) {
+				if (!enemy->IsDead()) {     // もし1体でも敵が生きていたら
+					allEnemiesDead = false; // フラグをfalseにする
+					break;                  // ループを抜ける
+				}
+			}
+			if (allEnemiesDead) { 
+				for (Enemy* enemy : enemys_) {
+					delete enemy;
+				}                       // 全ての敵が死んでいた場合
+				enemys_.clear();                 // リストをクリア
+				enemyScene = nextScene; // 次のステージに切り替える
+			}
+		}
+	}
 }
 
 void GameScene::CheckAllCollisions() {
@@ -296,6 +383,9 @@ void GameScene::Draw() {
 	}
 	for (EnemyBullet* bullet : enemyBullets_) {
 		bullet->Draw(viewProjection_);
+	}
+	for (Particle* particle : particles_) {
+		particle->Draw(viewProjection_);
 	}
 
 	// 3Dオブジェクト描画後処理

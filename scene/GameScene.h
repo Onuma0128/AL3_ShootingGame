@@ -7,6 +7,7 @@
 #include "Model.h"
 #include "Player.h"
 #include "Enemy.h"
+#include "Particle.h"
 #include "Skydome.h"
 #include "Sprite.h"
 #include "RailCamera.h"
@@ -42,7 +43,7 @@ public: // メンバ関数
 	/// <summary>
 	/// 敵発生データの読み込み
 	/// </summary>
-	void LoadEnemyPopData();
+	void LoadEnemyPopData(std::string& filePath, std::stringstream& enemyPopCommands);
 	/// <summary>
 	/// 敵発生コマンドの更新
 	/// </summary>
@@ -98,7 +99,14 @@ private: // メンバ変数
 	bool waitEnemy_;
 	std::list<Enemy*> enemys_;
 	//敵発生コマンド
-	std::stringstream enemyPopCommands_;
+	std::stringstream enemyPopCommands_[3];
+	enum EnemyScene {
+		Stage1,
+		Stage2,
+		Stage3,
+	};
+	EnemyScene enemyScene = EnemyScene::Stage1;
+	void UpdateAndCheckScene(EnemyScene currentScene, EnemyScene nextScene);
 	//  複数弾
 	std::list<EnemyBullet*> enemyBullets_;
 	// 発射タイマー
@@ -113,6 +121,10 @@ private: // メンバ変数
 	Model* modelSkydome_ = nullptr;
 	//レールカメラ
 	RailCamera* railCamera_ = nullptr;
+	// パーティクル
+	std::list<Particle*> particles_; 
+	Model* modelParticle_ = nullptr;
+	uint32_t praticleTexture_ = 0;
 
 	/// <summary>
 	/// ゲームシーン用

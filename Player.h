@@ -77,6 +77,9 @@ private:
 	std::list<PlayerBullet*> bullets_;
 	//3Dレティクル用ワールドトランスフォーム
 	WorldTransform worldTransform3DReticle_;
+	// ロックオンゲージの画像
+	Sprite* spriteGauge_ = nullptr;
+	Sprite* spriteGaugeFrame_ = nullptr;
 	// ターゲットレティクルの待ち時間
 	float targetReticleTima_ = 0;
 	//敵をターゲットしているかどうか

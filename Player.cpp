@@ -9,6 +9,8 @@ Player::~Player() {
 		delete bullet;
 	}
 	delete sprite2DReticle_;
+	delete spriteGauge_;
+	delete spriteGaugeFrame_;
 }
 
 void Player::Initialize(Model* model, uint32_t textureHandle, Vector3 playerPos) {
@@ -20,14 +22,21 @@ void Player::Initialize(Model* model, uint32_t textureHandle, Vector3 playerPos)
 	worldTransform_.Initialize();
 	// シングルトンインスタンスを取得する
 	input_ = Input::GetInstance();
-	//3Dレティクルのワールドトランスフォーム初期化
+	// 3Dレティクルのワールドトランスフォーム初期化
 	worldTransform3DReticle_.Initialize();
-	//レティクル用テクスチャ取得
+	// レティクル用テクスチャ取得
 	uint32_t textureReticle = TextureManager::Load("2dReticle.png");
-	//スプライト生成
+	// スプライト生成
 	sprite2DReticle_ = Sprite::Create(textureReticle, Vector2{640.0f, 360.0f}, Vector4{0.0f, 0.0f, 0.0f, 1.0f}, Vector2{0.5f, 0.5f});
-	targetReticleTima_ = 0.0f;
+	targetReticleTima_ = 1.0f;
 	isTargetingEnemy_ = false;
+	// ゲージ画像の初期化
+	uint32_t textureGauge[2] = {
+		TextureManager::Load("lockONGauge.png"),
+		TextureManager::Load("lockONGaugeFrame.png")
+	};
+	spriteGauge_ = Sprite::Create(textureGauge[0], Vector2{48.0f, 640.0f}, Vector4{1.0f, 1.0f, 1.0f, 1.0f}, Vector2{0.5f, 0.5f});
+	spriteGaugeFrame_ = Sprite::Create(textureGauge[1], Vector2{208.0f, 640.0f}, Vector4{1.0f, 1.0f, 1.0f, 1.0f}, Vector2{0.5f, 0.5f});
 }
 
 Vector3 Player::GetWorldPosition() { 
@@ -66,6 +75,9 @@ void Player::Update(const ViewProjection& viewProjection) {
 	for (PlayerBullet* bullet : bullets_) {
 		bullet->Update();
 	}
+	// ゲージバーの更新
+	spriteGauge_->SetPosition(Vector2{160.0f * targetReticleTima_ + 48.0f, 640.0f});
+	spriteGauge_->SetSize(Vector2{320.0f * targetReticleTima_, 64.0f});
 }
 
 void Player::PlayerMove() {
@@ -120,9 +132,9 @@ void Player::ReticleUpdate(const ViewProjection& viewProjection) {
 	worldTransform3DReticle_.translation_ = Add(posNear, Multiply(kDistanceTextObject, mouseDirection));
 	worldTransform3DReticle_.UpdateMatrix();
 
-	targetReticleTima_--;
-	if (targetReticleTima_ <= 0.0f) {
-		targetReticleTima_ = 0.0f;
+	targetReticleTima_ += 1.0f / 300.0f;
+	if (targetReticleTima_ >= 1.0f) {
+		targetReticleTima_ = 1.0f;
 	}
 }
 
@@ -143,7 +155,7 @@ void Player::ReticleCollision(const ViewProjection& viewProjection) {
 		bool isColliding = CheckCollisionCircleCircle(Vector3{spritePosition_.x, spritePosition_.y, 0.0f}, 16, positionEnemy, 16);
 		if (isColliding) {
 			worldTransform3DReticle_.translation_ = enemy->GetWorldPosition();
-			if (targetReticleTima_ == 0.0f) {
+			if (targetReticleTima_ == 1.0f) {
 				isTargetingEnemy_ = true;
 				enemy->SetIsTargetingEnemy(isTargetingEnemy_);
 			}
@@ -230,7 +242,7 @@ void Player::TargetAttack() {
 				// 弾を生成し、初期化
 				BulletInitialize(kBulletSpeed, enemyCameraPos, velocity);
 				enemy->SetIsTargetingEnemy(false);
-				targetReticleTima_ = 300.0f;
+				targetReticleTima_ = 0.0f;
 			}
 		}
 	}
@@ -266,5 +278,7 @@ void Player::Draw(ViewProjection& viewProjection) {
 }
 
 void Player::DrawUI() { 
+	spriteGaugeFrame_->Draw();
+	spriteGauge_->Draw();
 	sprite2DReticle_->Draw();
 }
