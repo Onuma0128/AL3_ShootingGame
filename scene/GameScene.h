@@ -36,10 +36,7 @@ public: // メンバ関数
 	/// </summary>
 	void Initialize();
 
-	/// <summary>
-	/// 敵を追加する
-	/// </summary>
-	void AddEnemyBullet(Enemy* enemy);
+	void EnemySceneInitialize();
 	/// <summary>
 	/// 敵発生データの読み込み
 	/// </summary>
@@ -50,14 +47,11 @@ public: // メンバ関数
 	void UpdateEnemyPopCommands(std::stringstream& enemyPopCommands);
 
 	/// <summary>
-	/// 敵弾を追加する
-	/// </summary>
-	void AddEnemyBullet(EnemyBullet* enemyBullet);
-
-	/// <summary>
 	/// 毎フレーム処理
 	/// </summary>
 	void Update();
+
+	void RandomEnemyScene(int i);
 	/// <summary>
 	/// 衝突判定と応答
 	/// </summary>
@@ -106,7 +100,8 @@ private: // メンバ変数
 		Stage3,
 	};
 	EnemyScene enemyScene = EnemyScene::Stage1;
-	void UpdateAndCheckScene(EnemyScene currentScene, EnemyScene nextScene);
+	std::string enemyDataFilePath_[3] = {};
+	void UpdateAndCheckScene(EnemyScene currentScene);
 	//  複数弾
 	std::list<EnemyBullet*> enemyBullets_;
 	// 発射タイマー

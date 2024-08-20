@@ -132,7 +132,7 @@ void Player::ReticleUpdate(const ViewProjection& viewProjection) {
 	worldTransform3DReticle_.translation_ = Add(posNear, Multiply(kDistanceTextObject, mouseDirection));
 	worldTransform3DReticle_.UpdateMatrix();
 
-	targetReticleTima_ += 1.0f / 300.0f;
+	targetReticleTima_ += 1.0f / 600.0f;
 	if (targetReticleTima_ >= 1.0f) {
 		targetReticleTima_ = 1.0f;
 	}
@@ -231,16 +231,19 @@ void Player::TargetAttack() {
 	if (isRBPressed && !wasRBPressed) {
 		for (Enemy* enemy : enemys_) {
 			if (enemy->GetIsTargetingEnemy()) {
-				// 弾の速度
-				const float kBulletSpeed = 2.0f;
-				Vector3 velocity(0, 0, kBulletSpeed);
 				// 敵のワールド座標を取得
 				Vector3 enemyWorldPos = enemy->GetWorldPosition();
 				// ビュー行列で敵の座標を変換
 				Matrix4x4 viewMatrix = railCamera_->GetViewProjection().matView;
 				Vector3 enemyCameraPos = Transform(enemyWorldPos, viewMatrix);	
+
 				// 弾を生成し、初期化
-				BulletInitialize(kBulletSpeed, enemyCameraPos, velocity);
+				PlayerBullet* newBullet = new PlayerBullet();
+				newBullet->SetParent(worldTransform_.parent_);
+				newBullet->TargetInitialize(model_, worldTransform_.translation_, enemyCameraPos);
+				// 弾を登録する
+				bullets_.push_back(newBullet);
+
 				enemy->SetIsTargetingEnemy(false);
 				targetReticleTima_ = 0.0f;
 			}

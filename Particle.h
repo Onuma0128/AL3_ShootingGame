@@ -8,7 +8,6 @@
 struct ParticleInstance {
 	WorldTransform worldTransform;
 	Vector3 velocity;
-	float particleTime;
 };
 
 class Particle {
@@ -25,6 +24,7 @@ public:
 private:
 
 	std::list<ParticleInstance> particles_;
+	float particleTime_ = 0;
 	float particleTimeCount_ = 0;
 	bool isActive_;
 	ObjectColor particleColor_;

@@ -43,6 +43,12 @@ float Length(const Vector3& v) {
 	return result;
 }
 
+float VectorDistance(const Vector3& v, const Vector3& v1) {
+	float result{};
+	result = sqrtf(v.x * v1.x + v.y * v1.y + v.z * v1.z);
+	return result;
+}
+
 Vector3 Normalize(const Vector3& v) {
 	Vector3 result{};
 	float Length{};

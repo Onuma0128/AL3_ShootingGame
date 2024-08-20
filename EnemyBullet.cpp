@@ -29,7 +29,7 @@ Vector3 EnemyBullet::GetWorldPosition() {
 
 void EnemyBullet::Update() {
 	t += 1.0f / 100.0f;
-	if (t < 0.1f) {
+	if (t < 0.3f) {
 		const float kBulletSpeed = 0.8f;
 		Vector3 toPlayer = player_->GetWorldPosition();
 		toPlayer = Normalize(Subtract(toPlayer, worldTransform_.translation_));

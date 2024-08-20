@@ -13,9 +13,12 @@ class PlayerBullet : public Collider {
 public:
 	/// 初期化
 	void Initialize(Model* model, const Vector3& position, const Vector3& velocity);
+	void TargetInitialize(Model* model, const Vector3& position, const Vector3& targetPosition);
 	// ワールド座標を取得
 	Vector3 GetWorldPosition() override;
 	void SetParent(const WorldTransform* parent);
+	bool GetIsTarget() { return isTargeting_; }
+	void SetTargetPosition(const Vector3& position);
 
 	/// 更新
 	void Update();
@@ -36,6 +39,13 @@ private:
 	uint32_t textureHandle_ = 0u;
 	//弾の速度
 	Vector3 velocity_;
+	// ターゲット座標
+	Vector3 playerPosition_{};
+	Vector3 targetPosition_{};
+	float lerpTimer_;
+	float lerpDuration_;
+	// ターゲットしているかフラグ
+	bool isTargeting_ = false;
 	//弾の寿命
 	static const int32_t kLifeTime = 60 * 5;
 	//デスタイマー

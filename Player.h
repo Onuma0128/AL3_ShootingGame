@@ -36,6 +36,7 @@ public:
 	void SetParent(const WorldTransform* parent);
 	void SetEnemy(std::list<Enemy*> enemy) { enemys_ = enemy; }
 	void SetRailCamera(RailCamera* railCamera) { railCamera_ = railCamera; }
+	void onCollisionBullet(float i) { targetReticleTima_ += i; }
 
 	/// <summary>
 	/// 更新

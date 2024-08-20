@@ -60,14 +60,12 @@ void GameScene::Initialize() {
 	// 自キャラの初期化
 	Vector3 playerPosition(0, 0, 50);
 	player_->Initialize(model_, textureHandle_, playerPosition);
-
-	std::string enemyDataFilePath[3]{
-		"Resources/enemyPop1.csv",
-		"Resources/enemyPop2.csv",
-		"Resources/enemyPop3.csv"
-	};
+	// ファイル読み込み
+	enemyDataFilePath_[0] = "Resources/enemyPop1.csv";
+	enemyDataFilePath_[1] = "Resources/enemyPop2.csv";
+	enemyDataFilePath_[2] = "Resources/enemyPop3.csv";
 	for (int i = 0; i < 3; i++) {
-		LoadEnemyPopData(enemyDataFilePath[i], enemyPopCommands_[i]);
+		LoadEnemyPopData(enemyDataFilePath_[i], enemyPopCommands_[i]);
 	}
 	//レティクルのテクスチャ
 	TextureManager::Load("2dReticle.png");
@@ -75,9 +73,23 @@ void GameScene::Initialize() {
 	praticleTexture_ = TextureManager::Load("white1x1.png");
 }
 
-void GameScene::AddEnemyBullet(Enemy* enemy) {
-	// リストに登録する
-	enemys_.push_back(enemy);
+void GameScene::EnemySceneInitialize() {
+	for (int i = 0; i < 3; i++) {
+		enemyPopCommands_[i].clear();
+		enemyPopCommands_[i].str("");
+		LoadEnemyPopData(enemyDataFilePath_[i], enemyPopCommands_[i]);
+	}
+}
+
+void GameScene::RandomEnemyScene(int i) {
+	if (i == 1) {
+		enemyScene = EnemyScene::Stage1;
+	}
+	if (i == 2) {
+		enemyScene = EnemyScene::Stage2;
+	} else {
+		enemyScene = EnemyScene::Stage3;
+	}
 }
 
 void GameScene::LoadEnemyPopData(std::string& filePath, std::stringstream& enemyPopCommands) {
@@ -150,11 +162,6 @@ void GameScene::UpdateEnemyPopCommands(std::stringstream& enemyPopCommands) {
 	}
 }
 
-void GameScene::AddEnemyBullet(EnemyBullet* enemyBullet) {
-	//リストに登録する
-	enemyBullets_.push_back(enemyBullet);
-}
-
 void GameScene::Update() {
 #ifdef _DEBUG
 	if (input_->TriggerKey(DIK_SPACE)) {
@@ -203,7 +210,8 @@ void GameScene::Update() {
 		enemy->Update(railCamera_->GetViewProjection());
 		if (enemy->IsDead()) {
 			Particle* newParticle = new Particle();
-			newParticle->Initialize(modelParticle_, praticleTexture_, enemy->GetWorldPosition(), 10, 600.0f);
+			newParticle->Initialize(modelParticle_, praticleTexture_, 
+				enemy->GetWorldPosition(), 10, 60);
 			particles_.push_back(newParticle);
 		}
 	}
@@ -212,8 +220,11 @@ void GameScene::Update() {
 		bullet->Update();
 		if (bullet->IsDead()) {
 			Particle* newParticle = new Particle();
-			newParticle->Initialize(modelParticle_, praticleTexture_, bullet->GetWorldPosition(), 5, 300.0f);
+			newParticle->Initialize(modelParticle_, praticleTexture_, 
+				bullet->GetWorldPosition(), 5, 30);
 			particles_.push_back(newParticle);
+
+			player_->onCollisionBullet(1.0f / 60.0f);
 		}
 	}
 
@@ -222,8 +233,9 @@ void GameScene::Update() {
 		particle->Update();
 	}
 	// 条件が揃ったら次のシーンに移動
-	UpdateAndCheckScene(EnemyScene::Stage1, EnemyScene::Stage2);
-	UpdateAndCheckScene(EnemyScene::Stage2, EnemyScene::Stage3);
+	UpdateAndCheckScene(EnemyScene::Stage1);
+	UpdateAndCheckScene(EnemyScene::Stage2);
+	UpdateAndCheckScene(EnemyScene::Stage3);
 
 	// デスフラグの立った敵を削除
 	enemys_.remove_if([](Enemy* enemy) {
@@ -257,14 +269,16 @@ void GameScene::Update() {
 	player_->SetRailCamera(railCamera_);
 }
 
-void GameScene::UpdateAndCheckScene(EnemyScene currentScene, EnemyScene nextScene) {
+void GameScene::UpdateAndCheckScene(EnemyScene currentScene) {
 	bool sceneChanged = false;
 
 	if (enemyScene == currentScene && !sceneChanged) {
 		for (Enemy* enemy : enemys_) {
 			if (railCamera_->GetWorldTransform().translation_.z > enemy->GetWorldPosition().z) {
-				enemyScene = nextScene;
-				sceneChanged = true; // フラグを立てる
+				// シーンをランダムで決める
+				int i = rand() % 3 + 1;
+				RandomEnemyScene(i);
+				EnemySceneInitialize();
 			}
 		}
 		if (sceneChanged) {
@@ -273,20 +287,21 @@ void GameScene::UpdateAndCheckScene(EnemyScene currentScene, EnemyScene nextScen
 			}
 		}
 		if (!enemys_.empty()) {
-			bool allEnemiesDead = true; // 全ての敵が死んでいるかを確認するフラグ
-
+			bool allEnemiesDead = true;
 			for (Enemy* enemy : enemys_) {
-				if (!enemy->IsDead()) {     // もし1体でも敵が生きていたら
-					allEnemiesDead = false; // フラグをfalseにする
-					break;                  // ループを抜ける
+				if (!enemy->IsDead()) {    
+					allEnemiesDead = false;
+					break;                 
 				}
 			}
 			if (allEnemiesDead) { 
 				for (Enemy* enemy : enemys_) {
 					delete enemy;
-				}                       // 全ての敵が死んでいた場合
-				enemys_.clear();                 // リストをクリア
-				enemyScene = nextScene; // 次のステージに切り替える
+				}                      
+				enemys_.clear();       
+				int j = rand() % 3 + 1;
+				RandomEnemyScene(j);
+				EnemySceneInitialize();
 			}
 		}
 	}

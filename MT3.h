@@ -13,6 +13,7 @@ Vector3 Multiply(const Vector3& v1, const Vector3& v2);
 Vector3 Multiply(const Vector3& v, const Matrix4x4& M);
 // 長さ
 float Length(const Vector3& v);
+float VectorDistance(const Vector3& v, const Vector3& v1);
 // 正規化
 Vector3 Normalize(const Vector3& v);
 // 内積
