@@ -30,6 +30,7 @@ public:
 	void BulletInitialize(float bulletSpeed, Vector3 worldPosition, Vector3 velocity);
 	// ワールド座標を取得
 	Vector3 GetWorldPosition() override;
+	Vector3 GetWorldReticlePosition();
 	/// <summary>
 	/// 親となるワールドトランスフォームをセット
 	/// </summary>
@@ -46,7 +47,7 @@ public:
 	void ReticleUpdate(const ViewProjection& viewProjection);
 	void ReticleCollision(const ViewProjection& viewProjection);
 	void PlayerParameter();
-	void Attack();
+	void Attack(const ViewProjection& viewProjection);
 	void TargetAttack();
 	//衝突を検出したら呼び出しされるコールバック関数
 	void onCollision() override;

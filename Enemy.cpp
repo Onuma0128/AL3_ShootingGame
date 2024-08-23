@@ -28,15 +28,18 @@ void Enemy::Initialize(Model* model, uint32_t textureHandle) {
 
 void Enemy::SetEnemyPosition(const Vector3& pos) { worldTransform_.translation_ = pos; }
 
+void Enemy::SetEnemySpeed(const Vector3& move) { move_ = move; }
+
 Vector3 Enemy::GetWorldPosition() { 
 	return Transform(Vector3{0, 0, 0}, worldTransform_.matWorld_); 
 }
 
 void Enemy::Update(const ViewProjection& viewProjection) {
-	if (worldTransform_.translation_.z <= 0) {
+	if (worldTransform_.translation_.z <= 15 && worldTransform_.translation_.z >= -15 &&
+		worldTransform_.translation_.x <= 15 && worldTransform_.translation_.x >= -15) {
 		ChangeState(std::make_unique<EnemyStateLeave>(this));
 	}
-
+	
 	state_->Update();
 	// 行列を定数バッファに転送
 	worldTransform_.UpdateMatrix();

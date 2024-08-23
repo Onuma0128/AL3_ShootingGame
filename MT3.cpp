@@ -67,6 +67,14 @@ float Dot(const Vector3& v1, const Vector3& v2) {
 	return result;
 }
 
+Vector3 Cross(const Vector3& v1, const Vector3& v2) {
+	Vector3 result{};
+	result.x = v1.y * v2.z - v1.z * v2.y;
+	result.y = v1.z * v2.x - v1.x * v2.z;
+	result.z = v1.x * v2.y - v1.y * v2.x;
+	return result;
+}
+
 Matrix4x4 Add(const Matrix4x4& m1, const Matrix4x4& m2) {
 	Matrix4x4 result{};
 	for (int i = 0; i < 4; i++) {
@@ -233,6 +241,21 @@ bool circleCollision(Vector3 v1, Vector3 v2, float radiusV1, float radiusV2) {
 	}
 }
 
+Matrix4x4 MakeIdentity(Matrix4x4& matrix) {
+	// すべての要素をゼロに初期化
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			matrix.m[i][j] = 0.0f;
+		}
+	}
+	// 対角線上に1を設定
+	matrix.m[0][0] = 1.0f;
+	matrix.m[1][1] = 1.0f;
+	matrix.m[2][2] = 1.0f;
+	matrix.m[3][3] = 1.0f;
+	return matrix;
+}
+
 Matrix4x4 MakeScaleMatrix(const Vector3& scale) { 
 	Matrix4x4 m1{scale.x, 0, 0, 0, 0, scale.y, 0, 0, 0, 0, scale.z, 0, 0, 0, 0, 1};
 	return m1;
@@ -266,6 +289,16 @@ Matrix4x4 MakeTranslateMatrix(const Vector3& translate) {
 	    1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, translate.x, translate.y, translate.z, 1,
 	};
 	return m3;
+}
+
+Matrix4x4 LookAt(const Vector3& eye, const Vector3& target, const Vector3& up) {
+	Vector3 zaxis = Normalize(Subtract(target, eye)); // forward
+	Vector3 xaxis = Normalize(Cross(up, zaxis));      // right
+	Vector3 yaxis = Cross(zaxis, xaxis);              // up
+
+	Matrix4x4 result = {xaxis.x, yaxis.x, zaxis.x, 0, xaxis.y, yaxis.y, zaxis.y, 0, xaxis.z, yaxis.z, zaxis.z, 0, -Dot(xaxis, eye), -Dot(yaxis, eye), -Dot(zaxis, eye), 1};
+
+	return result;
 }
 
 float Lerp(float& v1, float& v2, float t) {

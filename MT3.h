@@ -18,12 +18,16 @@ float VectorDistance(const Vector3& v, const Vector3& v1);
 Vector3 Normalize(const Vector3& v);
 // 内積
 float Dot(const Vector3& v1, const Vector3& v2);
+// クロス積
+Vector3 Cross(const Vector3& v1, const Vector3& v2);
 // 座標変換
 Vector3 Transform(const Vector3& vector, const Matrix4x4& matrix);
 
-//拡縮行列
+//単位行列
+Matrix4x4 MakeIdentity(Matrix4x4& matrix);
+    //拡縮行列
 Matrix4x4 MakeScaleMatrix(const Vector3& scale);
-    //回転行列
+//回転行列
 Matrix4x4 MakeRotateMatrix(const Vector3& rotate);
 // 1.x軸の回転行列
 Matrix4x4 MakeRotateXMatrix(float radian);
@@ -54,6 +58,8 @@ Vector3 TransformNormal(const Vector3& v, const Matrix4x4& m);
 Matrix4x4 MakeAfineMatrix(const Vector3& scale, const Vector3& rotate, const Vector3& translate);
 // ビューポート変換行列
 Matrix4x4 MakeViewportMatrix(float left, float top, float width, float height, float minDepth, float maxDepth);
+//
+Matrix4x4 LookAt(const Vector3& eye, const Vector3& target, const Vector3& up);
 
 //円の衝突判定
 bool circleCollision(Vector3 v1, Vector3 v2, float radiusV1, float radiusV2);

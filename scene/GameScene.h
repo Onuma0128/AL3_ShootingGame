@@ -93,14 +93,17 @@ private: // メンバ変数
 	bool waitEnemy_;
 	std::list<Enemy*> enemys_;
 	//敵発生コマンド
-	std::stringstream enemyPopCommands_[3];
+	std::stringstream enemyPopCommands_[6];
 	enum EnemyScene {
 		Stage1,
 		Stage2,
 		Stage3,
+		Stage4,
+		Stage5,
+		Stage6,
 	};
 	EnemyScene enemyScene = EnemyScene::Stage1;
-	std::string enemyDataFilePath_[3] = {};
+	std::string enemyDataFilePath_[6] = {};
 	void UpdateAndCheckScene(EnemyScene currentScene);
 	//  複数弾
 	std::list<EnemyBullet*> enemyBullets_;

@@ -6,6 +6,7 @@ EnemyStateApproach::EnemyStateApproach(Enemy* enemy)
 }
 
 void EnemyStateApproach::Update() {
-	Vector3 move{ 0.0f, 0.0f, -0.1f };
+	Vector3 move{};
+	move = enemy_->GetEnemySpeed();
 	enemy_->EnemyMove(move);
 }

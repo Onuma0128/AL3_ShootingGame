@@ -25,7 +25,7 @@ void PlayerBullet::TargetInitialize(Model* model, const Vector3& position, const
 	worldTransform_.translation_ = position;
 	playerPosition_ = position;
 	// 引数で受け取った速度をメンバ変数に代入
-	targetPosition_ = {targetPosition.x, targetPosition.y, -0.1f * 30.0f + targetPosition.z};
+	targetPosition_ = targetPosition;
 	//targetPosition_ = targetPosition;
 	isTargeting_ = true;
 

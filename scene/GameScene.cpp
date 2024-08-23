@@ -61,10 +61,13 @@ void GameScene::Initialize() {
 	Vector3 playerPosition(0, 0, 50);
 	player_->Initialize(model_, textureHandle_, playerPosition);
 	// ファイル読み込み
-	enemyDataFilePath_[0] = "Resources/enemyPop1.csv";
-	enemyDataFilePath_[1] = "Resources/enemyPop2.csv";
-	enemyDataFilePath_[2] = "Resources/enemyPop3.csv";
-	for (int i = 0; i < 3; i++) {
+	enemyDataFilePath_[0] = "Resources/enemyPop/enemyPop1.csv";
+	enemyDataFilePath_[1] = "Resources/enemyPop/enemyPop2.csv";
+	enemyDataFilePath_[2] = "Resources/enemyPop/enemyPop3.csv";
+	enemyDataFilePath_[3] = "Resources/enemyPop/enemyPop4.csv";
+	enemyDataFilePath_[4] = "Resources/enemyPop/enemyPop5.csv";
+	enemyDataFilePath_[5] = "Resources/enemyPop/enemyPop6.csv";
+	for (int i = 0; i < 6; i++) {
 		LoadEnemyPopData(enemyDataFilePath_[i], enemyPopCommands_[i]);
 	}
 	//レティクルのテクスチャ
@@ -74,7 +77,7 @@ void GameScene::Initialize() {
 }
 
 void GameScene::EnemySceneInitialize() {
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 6; i++) {
 		enemyPopCommands_[i].clear();
 		enemyPopCommands_[i].str("");
 		LoadEnemyPopData(enemyDataFilePath_[i], enemyPopCommands_[i]);
@@ -87,8 +90,18 @@ void GameScene::RandomEnemyScene(int i) {
 	}
 	if (i == 2) {
 		enemyScene = EnemyScene::Stage2;
-	} else {
+	}
+	if (i == 3) {
 		enemyScene = EnemyScene::Stage3;
+	}
+	if (i == 4) {
+		enemyScene = EnemyScene::Stage4;
+	}
+	if (i == 5) {
+		enemyScene = EnemyScene::Stage5;
+	}
+	if (i == 6) {
+		enemyScene = EnemyScene::Stage6;
 	}
 }
 
@@ -138,13 +151,20 @@ void GameScene::UpdateEnemyPopCommands(std::stringstream& enemyPopCommands) {
 			//z
 			std::getline(line_stream, word, ',');
 			float z = (float)std::atof(word.c_str());
+			//move
+			std::getline(line_stream, word, ',');
+			float moveX = (float)std::atof(word.c_str());
+
+			std::getline(line_stream, word, ',');
+			float moveZ = (float)std::atof(word.c_str());
 			//ここに敵の座標を初期化する処理
 			// 敵の生成
 			enemy_ = new Enemy();
 			enemy_->Initialize(model_, textureHandle_);
 			enemy_->SetGameScene(this);
 			enemy_->SetPlayer(player_);
-			enemy_->SetEnemyPosition(Vector3(x, y, z) + railCamera_->GetWorldTransform().translation_);
+			enemy_->SetEnemyPosition(Vector3(x, y, z));
+			enemy_->SetEnemySpeed(Vector3(moveX, 0, moveZ));
 			enemys_.push_back(enemy_);
 
 		} else if (word.find("WAIT") == 0) {
@@ -180,6 +200,7 @@ void GameScene::Update() {
 	}
 	CheckAllCollisions();
 	//レールカメラ
+	railCamera_->SetTarget(player_->GetWorldPosition());
 	railCamera_->Update();
 	viewProjection_.matView = railCamera_->GetViewProjection().matView;
 	viewProjection_.matProjection = railCamera_->GetViewProjection().matProjection;
@@ -200,6 +221,15 @@ void GameScene::Update() {
 		break;
 	case EnemyScene::Stage3:
 		UpdateEnemyPopCommands(enemyPopCommands_[2]);
+		break;
+	case EnemyScene::Stage4:
+		UpdateEnemyPopCommands(enemyPopCommands_[3]);
+		break;
+	case EnemyScene::Stage5:
+		UpdateEnemyPopCommands(enemyPopCommands_[4]);
+		break;
+	case EnemyScene::Stage6:
+		UpdateEnemyPopCommands(enemyPopCommands_[5]);
 		break;
 	default:
 		break;
@@ -236,6 +266,9 @@ void GameScene::Update() {
 	UpdateAndCheckScene(EnemyScene::Stage1);
 	UpdateAndCheckScene(EnemyScene::Stage2);
 	UpdateAndCheckScene(EnemyScene::Stage3);
+	UpdateAndCheckScene(EnemyScene::Stage4);
+	UpdateAndCheckScene(EnemyScene::Stage5);
+	UpdateAndCheckScene(EnemyScene::Stage6);
 
 	// デスフラグの立った敵を削除
 	enemys_.remove_if([](Enemy* enemy) {
@@ -271,12 +304,13 @@ void GameScene::Update() {
 
 void GameScene::UpdateAndCheckScene(EnemyScene currentScene) {
 	bool sceneChanged = false;
+	int enemySceneNum = 6;
 
 	if (enemyScene == currentScene && !sceneChanged) {
 		for (Enemy* enemy : enemys_) {
 			if (railCamera_->GetWorldTransform().translation_.z > enemy->GetWorldPosition().z) {
 				// シーンをランダムで決める
-				int i = rand() % 3 + 1;
+				int i = rand() % enemySceneNum + 1;
 				RandomEnemyScene(i);
 				EnemySceneInitialize();
 			}
@@ -299,7 +333,7 @@ void GameScene::UpdateAndCheckScene(EnemyScene currentScene) {
 					delete enemy;
 				}                      
 				enemys_.clear();       
-				int j = rand() % 3 + 1;
+				int j = rand() % enemySceneNum + 1;
 				RandomEnemyScene(j);
 				EnemySceneInitialize();
 			}

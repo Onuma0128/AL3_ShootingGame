@@ -8,4 +8,5 @@ EnemyStateLeave::EnemyStateLeave(Enemy* enemy)
 void EnemyStateLeave::Update() {
 	Vector3 move{ -0.1f, 0.1f, 0.0f };
 	enemy_->EnemyMove(move);
+	enemy_->onCollision();
 }

@@ -32,8 +32,10 @@ public:
 	void Initialize(Model* model, uint32_t textureHandle);
 	void SetPlayer(Player* player) { player_ = player; }
 	void SetEnemyPosition(const Vector3& pos);
+	void SetEnemySpeed(const Vector3& move);
 	// ワールド座標を取得
 	Vector3 GetWorldPosition() override;
+	Vector3 GetEnemySpeed() { return move_; }
 	bool IsDead() const { return isDead_; }
 
 	/// <summary>
@@ -71,6 +73,7 @@ public:
 private:
 	// ワールド変換データ
 	WorldTransform worldTransform_;
+	Vector3 move_;
 	// モデル
 	Model* model_ = nullptr;
 	// テクスチャハンドル
