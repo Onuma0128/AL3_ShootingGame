@@ -152,11 +152,11 @@ void GameScene::UpdateEnemyPopCommands(std::stringstream& enemyPopCommands) {
 			std::getline(line_stream, word, ',');
 			float z = (float)std::atof(word.c_str());
 			//move
-			std::getline(line_stream, word, ',');
+			/*std::getline(line_stream, word, ',');
 			float moveX = (float)std::atof(word.c_str());
 
 			std::getline(line_stream, word, ',');
-			float moveZ = (float)std::atof(word.c_str());
+			float moveZ = (float)std::atof(word.c_str());*/
 			//ここに敵の座標を初期化する処理
 			// 敵の生成
 			enemy_ = new Enemy();
@@ -164,7 +164,9 @@ void GameScene::UpdateEnemyPopCommands(std::stringstream& enemyPopCommands) {
 			enemy_->SetGameScene(this);
 			enemy_->SetPlayer(player_);
 			enemy_->SetEnemyPosition(Vector3(x, y, z));
-			enemy_->SetEnemySpeed(Vector3(moveX, 0, moveZ));
+			Vector3 moveVelocity = Subtract(railCamera_->GetWorldTransform().translation_, Vector3(x, y, z));
+			moveVelocity = Normalize(moveVelocity) * 0.08f;
+			enemy_->SetEnemySpeed(moveVelocity);
 			enemys_.push_back(enemy_);
 
 		} else if (word.find("WAIT") == 0) {

@@ -140,6 +140,7 @@ void Player::ReticleCollision(const ViewProjection& viewProjection) {
 	// ビュー行列とプロジェクション行列、ビューポート行列を合成する
 	Matrix4x4 matViewport = MakeViewportMatrix(0, 0, WinApp::kWindowWidth, WinApp::kWindowHeight, 0.0f, 1.0f);
 	Matrix4x4 matViewProjectionViewport = viewProjection.matView * viewProjection.matProjection * matViewport;
+	sprite2DReticle_->SetColor(Vector4{0.0f, 0.0f, 0.0f, 1.0f});
 
 	// 敵ターゲットのフラグの初期化
 	isTargetingEnemy_ = false;
@@ -153,6 +154,7 @@ void Player::ReticleCollision(const ViewProjection& viewProjection) {
 		bool isColliding = CheckCollisionCircleCircle(Vector3{spritePosition_.x, spritePosition_.y, 0.0f}, 16, positionEnemy, 16);
 		if (isColliding) {
 			worldTransform3DReticle_.translation_ = enemy->GetWorldPosition();
+			sprite2DReticle_->SetColor(Vector4{1.0f, 0.0f, 0.0f, 1.0f});
 			if (targetReticleTima_ == 1.0f) {
 				isTargetingEnemy_ = true;
 				enemy->SetIsTargetingEnemy(isTargetingEnemy_);

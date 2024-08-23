@@ -4,6 +4,7 @@
 #include <cassert>
 #include "EnemyStateApproach.h"
 #include "EnemyStateLeave.h"
+#include "imgui.h"
 
 Enemy::~Enemy() { 
 	delete spriteTargetReticle_;
@@ -52,6 +53,10 @@ void Enemy::Update(const ViewProjection& viewProjection) {
 	Vector3 positionEnemy = Transform(worldTransform_.translation_, matViewProjectionViewport);
 	spriteTargetReticle_->SetPosition(Vector2(positionEnemy.x, positionEnemy.y));
 	spriteTargetReticle_->SetColor(Vector4{1.0f, 0.0f, 0.0f, 1.0f});
+
+	ImGui::Begin("enemy");
+	ImGui::Text("%f,%f,%f", move_.x, move_.y, move_.z);
+	ImGui::End();
 }
 
 void Enemy::ChangeState(std::unique_ptr<BaseEnemyState> state) { state_ = std::move(state); }
