@@ -30,6 +30,7 @@ public:
 	void BulletInitialize(float bulletSpeed, Vector3 worldPosition, Vector3 velocity);
 	// ワールド座標を取得
 	Vector3 GetWorldPosition() override;
+	const WorldTransform& GetWorldTransform() { return worldTransform_; }
 	Vector3 GetWorldReticlePosition();
 	/// <summary>
 	/// 親となるワールドトランスフォームをセット
@@ -43,12 +44,14 @@ public:
 	/// 更新
 	/// </summary>
 	void Update(const ViewProjection& viewProjection);
-	void PlayerMove();
 	void ReticleUpdate(const ViewProjection& viewProjection);
 	void ReticleCollision(const ViewProjection& viewProjection);
 	void PlayerParameter();
+	// 攻撃
 	void Attack(const ViewProjection& viewProjection);
 	void TargetAttack();
+	// 回避
+	void Avoidance();
 	//衝突を検出したら呼び出しされるコールバック関数
 	void onCollision() override;
 	float GetRadius() override;
@@ -69,6 +72,11 @@ public:
 private:
 	// ワールド変換データ
 	WorldTransform worldTransform_;
+	float playerHP_;
+	bool playerLeftRotate_;
+	float rotateLeftTime_;
+	bool playerRightRotate_;
+	float rotateRightTime_;
 	// モデル
 	Model* model_ = nullptr;
 	// テクスチャハンドル

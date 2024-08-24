@@ -24,6 +24,9 @@ GameScene::~GameScene() {
 	for (Particle* particle : particles_) {
 		delete particle;
 	}
+	for (MiniMap* miniMap : miniMaps_) {
+		delete miniMap;
+	}
 }
 
 void GameScene::Initialize() {
@@ -42,10 +45,10 @@ void GameScene::Initialize() {
 	player_ = new Player();
 	// デバッグカメラの生成
 	debugCamera_ = new DebugCamera(1280, 720);
-	// 軸方向表示の表示を有効にする
-	AxisIndicator::GetInstance()->SetVisible(true);
-	// 軸方向表示が参照するビュープロジェクションを指定する
-	AxisIndicator::GetInstance()->SetTargetViewProjection(&viewProjection_);
+	//// 軸方向表示の表示を有効にする
+	//AxisIndicator::GetInstance()->SetVisible(true);
+	//// 軸方向表示が参照するビュープロジェクションを指定する
+	//AxisIndicator::GetInstance()->SetTargetViewProjection(&viewProjection_);
 	// 天球の生成
 	skydome_ = new Skydome();
 	// 3Dモデルの生成
@@ -60,6 +63,7 @@ void GameScene::Initialize() {
 	// 自キャラの初期化
 	Vector3 playerPosition(0, 0, 50);
 	player_->Initialize(model_, textureHandle_, playerPosition);
+	player_->SetRailCamera(railCamera_);
 	// ファイル読み込み
 	enemyDataFilePath_[0] = "Resources/enemyPop/enemyPop1.csv";
 	enemyDataFilePath_[1] = "Resources/enemyPop/enemyPop2.csv";
@@ -74,6 +78,8 @@ void GameScene::Initialize() {
 	TextureManager::Load("2dReticle.png");
 	modelParticle_ = Model::CreateFromOBJ("enemyExplosion", true);
 	praticleTexture_ = TextureManager::Load("white1x1.png");
+
+	textureEnemySprite_ = TextureManager::Load("enemy2Dsprite.png");
 }
 
 void GameScene::EnemySceneInitialize() {
@@ -168,6 +174,11 @@ void GameScene::UpdateEnemyPopCommands(std::stringstream& enemyPopCommands) {
 			moveVelocity = Normalize(moveVelocity) * 0.08f;
 			enemy_->SetEnemySpeed(moveVelocity);
 			enemys_.push_back(enemy_);
+
+			miniMap_ = new MiniMap();
+			miniMap_->Initialize(textureEnemySprite_, &enemy_->GetWorldTransform());
+			miniMaps_.push_back(miniMap_);
+		
 
 		} else if (word.find("WAIT") == 0) {
 			std::getline(line_stream, word, ',');
@@ -264,6 +275,10 @@ void GameScene::Update() {
 	for (Particle* particle : particles_) {
 		particle->Update();
 	}
+	for (MiniMap* miniMap : miniMaps_) {
+		miniMap->Update();
+	}
+
 	// 条件が揃ったら次のシーンに移動
 	UpdateAndCheckScene(EnemyScene::Stage1);
 	UpdateAndCheckScene(EnemyScene::Stage2);
@@ -295,13 +310,19 @@ void GameScene::Update() {
 		}
 		return false;
 	});
+	miniMaps_.remove_if([](MiniMap* miniMap) {
+		if (!miniMap->IsDraw()) {
+			delete miniMap;
+			return true;
+		}
+		return false;
+	});
 	Timer_--;
 	if (Timer_ < 0) {
 		Fire();
 		Timer_ = kFireInterval;
 	}
 	player_->SetEnemy(enemys_);
-	player_->SetRailCamera(railCamera_);
 }
 
 void GameScene::UpdateAndCheckScene(EnemyScene currentScene) {
@@ -454,6 +475,9 @@ void GameScene::Draw() {
 	player_->DrawUI();
 	for (Enemy* enemy : enemys_) {
 		enemy->DrawUI();
+	}
+	for (MiniMap* miniMap : miniMaps_) {
+		miniMap->DrawUI();
 	}
 
 	// スプライト描画後処理

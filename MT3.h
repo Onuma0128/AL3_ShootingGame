@@ -3,6 +3,8 @@
 #include <Vector3.h>
 #include <cmath>
 
+const float pi = 3.14159265f;
+
 // 加算
 Vector3 Add(const Vector3& v1, const Vector3& v2);
 // 減算

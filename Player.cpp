@@ -3,6 +3,7 @@
 #include <cassert>
 #include "Enemy.h"
 #include "RailCamera.h"
+#include "math.h"
 
 Player::~Player() { 
 	for (PlayerBullet* bullet : bullets_) {
@@ -24,6 +25,11 @@ void Player::Initialize(Model* model, uint32_t textureHandle, Vector3 playerPos)
 	input_ = Input::GetInstance();
 	// 3Dレティクルのワールドトランスフォーム初期化
 	worldTransform3DReticle_.Initialize();
+	playerHP_ = 10;
+	playerLeftRotate_ = false;
+	rotateLeftTime_ = 0.0f;
+	playerRightRotate_ = false;
+	rotateRightTime_ = 0.0f;
 	// レティクル用テクスチャ取得
 	uint32_t textureReticle = TextureManager::Load("2dReticle.png");
 	// スプライト生成
@@ -35,8 +41,9 @@ void Player::Initialize(Model* model, uint32_t textureHandle, Vector3 playerPos)
 		TextureManager::Load("lockONGauge.png"),
 		TextureManager::Load("lockONGaugeFrame.png")
 	};
-	spriteGauge_ = Sprite::Create(textureGauge[0], Vector2{48.0f, 640.0f}, Vector4{1.0f, 1.0f, 1.0f, 1.0f}, Vector2{0.5f, 0.5f});
-	spriteGaugeFrame_ = Sprite::Create(textureGauge[1], Vector2{208.0f, 640.0f}, Vector4{1.0f, 1.0f, 1.0f, 1.0f}, Vector2{0.5f, 0.5f});
+	spriteGauge_ = Sprite::Create(textureGauge[0], Vector2{48.0f, 652.0f}, Vector4{1.0f, 1.0f, 1.0f, 1.0f}, Vector2{0.5f, 0.5f});
+	spriteGaugeFrame_ = Sprite::Create(textureGauge[1], Vector2{208.0f, 652.0f}, Vector4{1.0f, 1.0f, 1.0f, 1.0f}, Vector2{0.5f, 0.5f});
+	spriteGaugeFrame_->SetSize(Vector2{352, 72.0f});
 }
 
 Vector3 Player::GetWorldPosition() { 
@@ -65,7 +72,10 @@ void Player::Update(const ViewProjection& viewProjection) {
 		return false;
 	});
 	// Playerの移動処理と移動制限
-	PlayerMove();
+	// 回避処理
+	Avoidance();
+	// 行列を定数バッファに転送
+	worldTransform_.UpdateMatrix();
 
 	// 2DReticleと3DReticleの座標計算
 	ReticleUpdate(viewProjection);
@@ -81,34 +91,49 @@ void Player::Update(const ViewProjection& viewProjection) {
 		bullet->Update();
 	}
 	// ゲージバーの更新
-	spriteGauge_->SetPosition(Vector2{160.0f * targetReticleTima_ + 48.0f, 640.0f});
-	spriteGauge_->SetSize(Vector2{320.0f * targetReticleTima_, 64.0f});
+	spriteGauge_->SetPosition(Vector2{160.0f * targetReticleTima_ + 48.0f, 652.0f});
+	spriteGauge_->SetSize(Vector2{320.0f * targetReticleTima_, 48.0f});
 }
 
-void Player::PlayerMove() {
-	//// キャラクターの移動ベクトル
-	//Vector3 move = {0, 0, 0};
-	//// キャラクターの移動速さ
-	//const float kCharacterSpeed = 0.2f;
-	//// ジョイスティックの入力処理
-	//XINPUT_STATE joystate;
-	//if (Input::GetInstance()->GetJoystickState(0, joystate)) {
-	//	move.x += (float)joystate.Gamepad.sThumbLX / SHRT_MAX * kCharacterSpeed;
-	//	move.y += (float)joystate.Gamepad.sThumbLY / SHRT_MAX * kCharacterSpeed;
-	//}
-	//// 移動限界座標
-	//const float kMoveLimiX = 33.0f;
-	//const float kMoveLimiY = 18.0f;
-	//// 範囲を超えない処理
-	//worldTransform_.translation_.x = max(worldTransform_.translation_.x, -kMoveLimiX);
-	//worldTransform_.translation_.x = min(worldTransform_.translation_.x, +kMoveLimiX);
-	//worldTransform_.translation_.y = max(worldTransform_.translation_.y, -kMoveLimiY);
-	//worldTransform_.translation_.y = min(worldTransform_.translation_.y, +kMoveLimiY);
+void Player::Avoidance() {
+	XINPUT_STATE joyState;
+	// 前フレームでのRBボタンの状態を記録
+	static bool wasLBPressed = false;
+	static bool wasRBPressed = false;
+	if (!Input::GetInstance()->GetJoystickState(0, joyState)) {
+		return;
+	}
+	// 現在のRBボタンの状態を取得
+	bool isLBPressed = (joyState.Gamepad.wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER) != 0;
+	bool isRBPressed = (joyState.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) != 0;
 
-	//// 座標移動(ベクトルの加算)
-	//worldTransform_.translation_ = Add(worldTransform_.translation_, move);
-	// 行列を定数バッファに転送
-	worldTransform_.UpdateMatrix();
+	if (!playerLeftRotate_ && !playerRightRotate_) {
+		if (isLBPressed && !wasLBPressed) {
+			playerLeftRotate_ = true;
+		}
+		if (isRBPressed && !wasRBPressed) {
+			playerRightRotate_ = true;
+		}
+	}
+	wasLBPressed = isLBPressed;
+	wasRBPressed = isRBPressed;
+	if (playerLeftRotate_ && rotateLeftTime_ < 1.0f) {
+		rotateLeftTime_ += 0.1f;
+		worldTransform_.rotation_.z += 2.0f * pi * 0.1f;
+		railCamera_->SetRotate(-0.01f);
+	}
+	if (playerRightRotate_ && rotateRightTime_ < 1.0f) {
+		rotateRightTime_ += 0.1f;
+		worldTransform_.rotation_.z -= 2.0f * pi * 0.1f;
+		railCamera_->SetRotate(0.01f);
+	}
+	if (rotateLeftTime_ >= 1.0f || rotateRightTime_ >= 1.0f) {
+		playerLeftRotate_ = false;
+		rotateLeftTime_ = 0.0f;
+		playerRightRotate_ = false;
+		rotateRightTime_ = 0.0f;
+		railCamera_->SetRotate(0.0f);
+	}
 }
 
 void Player::ReticleUpdate(const ViewProjection& viewProjection) {
@@ -150,6 +175,13 @@ void Player::ReticleCollision(const ViewProjection& viewProjection) {
 		Vector3 positionEnemy = enemy->GetWorldPosition();
 		// 敵をスクリーン座標に変換
 		positionEnemy = Transform(positionEnemy, matViewProjectionViewport);
+		// 敵が視界の外ならレティクルを外す
+		Vector3 screenPositionEnemy = Transform(enemy->GetWorldPosition(), viewProjection.matView);
+		// Z座標が0以下なら視界外と判定
+		if (screenPositionEnemy.z <= 0.0f) {
+			enemy->SetIsTargetingEnemy(false);
+			continue;
+		}
 		// スクリーン座標の衝突判定
 		bool isColliding = CheckCollisionCircleCircle(Vector3{spritePosition_.x, spritePosition_.y, 0.0f}, 16, positionEnemy, 16);
 		if (isColliding) {
@@ -181,11 +213,13 @@ void Player::PlayerParameter() {
 	ImGui::Begin("GameParameter");
 	// Player
 	ImGui::Text("Player");
-	ImGui::Text("x:%f,y:%f,z:%f",
+	ImGui::Text("x:%f,y:%f,z:%f,HP%f",
 		GetWorldPosition().x,
 		GetWorldPosition().y,
-		GetWorldPosition().z
+		GetWorldPosition().z,
+		playerHP_
 	);
+	ImGui::Text("left:%f,%d\n,right:%f,%d", rotateLeftTime_, playerLeftRotate_, rotateRightTime_, playerRightRotate_);
 
 	ImGui::Text("targetReticleTima\n%f", targetReticleTima_);
 	// PlayerReticle
@@ -206,7 +240,7 @@ void Player::Attack(const ViewProjection& viewProjection) {
 		return;
 	}
 	// 現在のRBボタンの状態を取得
-	bool isRBPressed = (joyState.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) != 0;
+	bool isRBPressed = (joyState.Gamepad.wButtons & XINPUT_GAMEPAD_B) != 0;
 
 	if (isRBPressed && !wasRBPressed) {
 		// 弾の速度
@@ -248,7 +282,7 @@ void Player::TargetAttack() {
 		return;
 	}
 	// 現在のRBボタンの状態を取得
-	bool isRBPressed = (joyState.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER) != 0;
+	bool isRBPressed = (joyState.Gamepad.wButtons & XINPUT_GAMEPAD_B) != 0;
 
 	if (isRBPressed && !wasRBPressed) {
 		for (Enemy* enemy : enemys_) {
@@ -285,7 +319,7 @@ void Player::BulletInitialize(float bulletSpeed, Vector3 worldPosition, Vector3 
 	bullets_.push_back(newBullet);
 }
 
-void Player::onCollision() {}
+void Player::onCollision() { playerHP_--; }
 
 float Player::GetRadius() { return 1.0f; }
 

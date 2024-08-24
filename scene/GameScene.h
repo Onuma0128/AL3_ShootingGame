@@ -11,6 +11,7 @@
 #include "Skydome.h"
 #include "Sprite.h"
 #include "RailCamera.h"
+#include "MiniMap.h"
 #include "ViewProjection.h"
 #include "WorldTransform.h"
 #include <sstream>
@@ -123,6 +124,10 @@ private: // メンバ変数
 	std::list<Particle*> particles_; 
 	Model* modelParticle_ = nullptr;
 	uint32_t praticleTexture_ = 0;
+	// ミニマップ
+	MiniMap* miniMap_;
+	std::list<MiniMap*> miniMaps_;
+	uint32_t textureEnemySprite_ = 0;
 
 	/// <summary>
 	/// ゲームシーン用

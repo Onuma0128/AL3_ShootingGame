@@ -35,6 +35,7 @@ public:
 	void SetEnemySpeed(const Vector3& move);
 	// ワールド座標を取得
 	Vector3 GetWorldPosition() override;
+	const WorldTransform& GetWorldTransform() { return worldTransform_; }
 	Vector3 GetEnemySpeed() { return move_; }
 	bool IsDead() const { return isDead_; }
 

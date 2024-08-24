@@ -12,6 +12,7 @@ public:
 	const WorldTransform& GetWorldTransform() { return worldTransform_; }
 	const ViewProjection& GetViewProjection() { return viewProjection_; }
 	void SetTarget(const Vector3 target);
+	void SetRotate(const float rotate);
 
 	/// <summary>
 	/// 毎フレーム処理
@@ -22,6 +23,7 @@ private:
 	// ワールド変換データ
 	WorldTransform worldTransform_;
 	Vector3 target_{};
+	float rotate_;
 	//ビュープロジェクション
 	ViewProjection viewProjection_;
 

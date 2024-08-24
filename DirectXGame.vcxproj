@@ -116,6 +116,7 @@
     <ClCompile Include="EnemyStateApproach.cpp" />
     <ClCompile Include="EnemyStateLeave.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MiniMap.cpp" />
     <ClCompile Include="MT3.cpp" />
     <ClCompile Include="Particle.cpp" />
     <ClCompile Include="Player.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="math\Vector2.h" />
     <ClInclude Include="math\Vector3.h" />
     <ClInclude Include="math\Vector4.h" />
+    <ClInclude Include="MiniMap.h" />
     <ClInclude Include="MT3.h" />
     <ClInclude Include="Particle.h" />
     <ClInclude Include="Player.h" />
