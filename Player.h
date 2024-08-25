@@ -54,6 +54,7 @@ public:
 	void Avoidance();
 	//衝突を検出したら呼び出しされるコールバック関数
 	void onCollision() override;
+	bool IsDead() const { return isDead_; }
 	float GetRadius() override;
 	// 弾リストを取得
 	const std::list<PlayerBullet*>& GetBullet() const { return bullets_; }
@@ -72,6 +73,7 @@ public:
 private:
 	// ワールド変換データ
 	WorldTransform worldTransform_;
+	bool isDead_ = false;
 	float playerHP_;
 	bool playerLeftRotate_;
 	float rotateLeftTime_;

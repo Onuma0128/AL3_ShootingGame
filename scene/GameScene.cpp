@@ -15,6 +15,7 @@ GameScene::~GameScene() {
 	delete modelSkydome_;
 	delete railCamera_;
 	delete modelParticle_;
+	delete miniMapBaseSprite_;
 	for (Enemy* enemy : enemys_) {
 		delete enemy;
 	}
@@ -64,6 +65,7 @@ void GameScene::Initialize() {
 	Vector3 playerPosition(0, 0, 50);
 	player_->Initialize(model_, textureHandle_, playerPosition);
 	player_->SetRailCamera(railCamera_);
+
 	// ファイル読み込み
 	enemyDataFilePath_[0] = "Resources/enemyPop/enemyPop1.csv";
 	enemyDataFilePath_[1] = "Resources/enemyPop/enemyPop2.csv";
@@ -71,15 +73,21 @@ void GameScene::Initialize() {
 	enemyDataFilePath_[3] = "Resources/enemyPop/enemyPop4.csv";
 	enemyDataFilePath_[4] = "Resources/enemyPop/enemyPop5.csv";
 	enemyDataFilePath_[5] = "Resources/enemyPop/enemyPop6.csv";
-	for (int i = 0; i < 6; i++) {
-		LoadEnemyPopData(enemyDataFilePath_[i], enemyPopCommands_[i]);
-	}
+	EnemySceneInitialize();
 	//レティクルのテクスチャ
 	TextureManager::Load("2dReticle.png");
 	modelParticle_ = Model::CreateFromOBJ("enemyExplosion", true);
 	praticleTexture_ = TextureManager::Load("white1x1.png");
 
+	texturePlayerSprite_ = TextureManager::Load("player2Dsprite.png");
 	textureEnemySprite_ = TextureManager::Load("enemy2Dsprite.png");
+	textureMiniMapBaseSprite_ = TextureManager::Load("miniMapBaseSprite.png");
+
+	miniMap_ = new MiniMap();
+	miniMap_->Initialize(texturePlayerSprite_, &railCamera_->GetWorldTransform());
+	miniMaps_.push_back(miniMap_);
+	miniMapBaseSprite_ = Sprite::Create(textureMiniMapBaseSprite_, Vector2{1184, 96}, Vector4{0.0f, 0.0f, 0.0f, 1.0f}, Vector2{0.5f, 0.5f});
+	miniMapBaseSprite_->SetSize(Vector2{192, 192});
 }
 
 void GameScene::EnemySceneInitialize() {
@@ -157,12 +165,6 @@ void GameScene::UpdateEnemyPopCommands(std::stringstream& enemyPopCommands) {
 			//z
 			std::getline(line_stream, word, ',');
 			float z = (float)std::atof(word.c_str());
-			//move
-			/*std::getline(line_stream, word, ',');
-			float moveX = (float)std::atof(word.c_str());
-
-			std::getline(line_stream, word, ',');
-			float moveZ = (float)std::atof(word.c_str());*/
 			//ここに敵の座標を初期化する処理
 			// 敵の生成
 			enemy_ = new Enemy();
@@ -171,7 +173,7 @@ void GameScene::UpdateEnemyPopCommands(std::stringstream& enemyPopCommands) {
 			enemy_->SetPlayer(player_);
 			enemy_->SetEnemyPosition(Vector3(x, y, z));
 			Vector3 moveVelocity = Subtract(railCamera_->GetWorldTransform().translation_, Vector3(x, y, z));
-			moveVelocity = Normalize(moveVelocity) * 0.08f;
+			moveVelocity = Normalize(moveVelocity) * 0.05f;
 			enemy_->SetEnemySpeed(moveVelocity);
 			enemys_.push_back(enemy_);
 
@@ -211,7 +213,6 @@ void GameScene::Update() {
 	} else {
 		viewProjection_.UpdateMatrix();
 	}
-	CheckAllCollisions();
 	//レールカメラ
 	railCamera_->SetTarget(player_->GetWorldPosition());
 	railCamera_->Update();
@@ -223,6 +224,13 @@ void GameScene::Update() {
 	skydome_->Update();
 	// 自キャラの更新
 	player_->Update(railCamera_->GetViewProjection());
+
+	if (player_->IsDead()) {
+		finished_ = true;
+	}
+	
+	// 当たり判定
+	CheckAllCollisions();
 
 	// 敵のcsvファイル読み込みとシーン切り替え
 	switch (enemyScene) {
@@ -256,18 +264,21 @@ void GameScene::Update() {
 			newParticle->Initialize(modelParticle_, praticleTexture_, 
 				enemy->GetWorldPosition(), 10, 60);
 			particles_.push_back(newParticle);
+			player_->onCollisionBullet(1.0f / 90.0f);
 		}
 	}
 	// 敵弾の更新とパーティクルの初期化
 	for (EnemyBullet* bullet : enemyBullets_) {
 		bullet->Update();
-		if (bullet->IsDead()) {
+		if (bullet->IsDead() && player_->IsDead()) {
 			Particle* newParticle = new Particle();
 			newParticle->Initialize(modelParticle_, praticleTexture_, 
 				bullet->GetWorldPosition(), 5, 30);
 			particles_.push_back(newParticle);
-
 			player_->onCollisionBullet(1.0f / 60.0f);
+			int enemySceneNum = 6;
+			int i = rand() % enemySceneNum + 1;
+			RandomEnemyScene(i);
 		}
 	}
 
@@ -476,6 +487,7 @@ void GameScene::Draw() {
 	for (Enemy* enemy : enemys_) {
 		enemy->DrawUI();
 	}
+	miniMapBaseSprite_->Draw();
 	for (MiniMap* miniMap : miniMaps_) {
 		miniMap->DrawUI();
 	}

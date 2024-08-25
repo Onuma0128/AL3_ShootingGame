@@ -93,6 +93,10 @@ void Player::Update(const ViewProjection& viewProjection) {
 	// ゲージバーの更新
 	spriteGauge_->SetPosition(Vector2{160.0f * targetReticleTima_ + 48.0f, 652.0f});
 	spriteGauge_->SetSize(Vector2{320.0f * targetReticleTima_, 48.0f});
+	isDead_ = false;
+	if (playerHP_ <= 0) {
+		isDead_ = true;
+	}
 }
 
 void Player::Avoidance() {
@@ -319,7 +323,10 @@ void Player::BulletInitialize(float bulletSpeed, Vector3 worldPosition, Vector3 
 	bullets_.push_back(newBullet);
 }
 
-void Player::onCollision() { playerHP_--; }
+void Player::onCollision() {
+	playerHP_--;
+	isDead_ = true;
+}
 
 float Player::GetRadius() { return 1.0f; }
 

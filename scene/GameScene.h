@@ -36,6 +36,7 @@ public: // メンバ関数
 	/// 初期化
 	/// </summary>
 	void Initialize();
+	bool IsFinished() const { return finished_; }
 
 	void EnemySceneInitialize();
 	/// <summary>
@@ -76,7 +77,10 @@ public: // メンバ関数
 	/// </summary>
 	void CheckCollisionPair(Collider* colliderA, Collider* colliderB);
 
-private: // メンバ変数
+private:
+	// 終了フラグ
+	bool finished_ = false;
+	// メンバ変数
 	DirectXCommon* dxCommon_ = nullptr;
 	Input* input_ = nullptr;
 	Audio* audio_ = nullptr;
@@ -127,7 +131,10 @@ private: // メンバ変数
 	// ミニマップ
 	MiniMap* miniMap_;
 	std::list<MiniMap*> miniMaps_;
+	uint32_t texturePlayerSprite_ = 0;
 	uint32_t textureEnemySprite_ = 0;
+	uint32_t textureMiniMapBaseSprite_ = 0;
+	Sprite* miniMapBaseSprite_{};
 
 	/// <summary>
 	/// ゲームシーン用
