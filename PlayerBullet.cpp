@@ -5,11 +5,10 @@ void PlayerBullet::Initialize(Model* model, const Vector3& position, const Vecto
 	// NULLポインタチェック
 	assert(model);
 	model_ = model;
-	// テクスチャ読み込み
-	textureHandle_ = TextureManager::Load("sample.png");
 	worldTransform_.Initialize();
 	// 引数で受け取った初期座標をセット
 	worldTransform_.translation_ = position;
+	worldTransform_.scale_ = {0.5f, 0.5f, 1.0f};
 	// 引数で受け取った速度をメンバ変数に代入
 	velocity_ = velocity;
 }
@@ -18,12 +17,12 @@ void PlayerBullet::TargetInitialize(Model* model, const Vector3& position, const
 	// NULLポインタチェック
 	assert(model);
 	model_ = model;
-	// テクスチャ読み込み
-	textureHandle_ = TextureManager::Load("sample.png");
 	worldTransform_.Initialize();
 	// 引数で受け取った初期座標をセット
 	worldTransform_.translation_ = position;
 	playerPosition_ = position;
+	// 弾を引き伸ばす
+	worldTransform_.scale_ = {0.5f, 0.5f, 1.5f};
 	// 引数で受け取った速度をメンバ変数に代入
 	targetPosition_ = targetPosition;
 	//targetPosition_ = targetPosition;
@@ -40,6 +39,10 @@ Vector3 PlayerBullet::GetWorldPosition() {
 
 void PlayerBullet::SetParent(const WorldTransform* parent) { 
 	worldTransform_.parent_ = parent; 
+}
+
+void PlayerBullet::SetRotate(const Vector3 rotate) {
+	worldTransform_.rotation_ = rotate;
 }
 
 void PlayerBullet::SetTargetPosition(const Vector3& position) {
@@ -83,6 +86,12 @@ void PlayerBullet::Update() {
 
 		worldTransform_.translation_ = newPosition;
 
+		Vector3 velocity = Subtract(pointB, pointA);
+		worldTransform_.rotation_.y = std::atan2(velocity.x, velocity.z);
+		Matrix4x4 rotateMatrixY = MakeRotateYMatrix(-worldTransform_.rotation_.y);
+		Vector3 velocityZ = Transform(velocity, rotateMatrixY);
+		worldTransform_.rotation_.x = std::atan2(-velocityZ.y, velocityZ.z);
+
 		worldTransform_.UpdateMatrix();
 
 		// 時間経過でデス
@@ -101,4 +110,4 @@ void PlayerBullet::onCollision() {
 
 float PlayerBullet::GetRadius() { return 1.0f; }
 
-void PlayerBullet::Draw(const ViewProjection& viewProjection) { model_->Draw(worldTransform_, viewProjection, textureHandle_); }
+void PlayerBullet::Draw(const ViewProjection& viewProjection) { model_->Draw(worldTransform_, viewProjection); }

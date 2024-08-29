@@ -14,11 +14,10 @@ Player::~Player() {
 	delete spriteGaugeFrame_;
 }
 
-void Player::Initialize(Model* model, uint32_t textureHandle, Vector3 playerPos) {
+void Player::Initialize(Model* model, Vector3 playerPos) {
 	// NULLポインタチェック
 	assert(model);
-	model_ = model;
-	textureHandle_ = textureHandle;
+	playerModel_ = model;
 	worldTransform_.translation_ = playerPos;
 	worldTransform_.Initialize();
 	// シングルトンインスタンスを取得する
@@ -117,6 +116,10 @@ void Player::Avoidance() {
 		}
 		if (isRBPressed && !wasRBPressed) {
 			playerRightRotate_ = true;
+		} 
+		if (Input::GetInstance()->GetJoystickState(0, joyState)) {
+			worldTransform_.rotation_.x = (float)joyState.Gamepad.sThumbLY / SHRT_MAX * -0.1f;
+			worldTransform_.rotation_.z = (float)joyState.Gamepad.sThumbLX / SHRT_MAX * -0.1f;
 		}
 	}
 	wasLBPressed = isLBPressed;
@@ -296,7 +299,8 @@ void Player::TargetAttack() {
 
 				// 弾を生成し、初期化
 				PlayerBullet* newBullet = new PlayerBullet();
-				newBullet->TargetInitialize(model_, GetWorldPosition(), enemyWorldPos);
+				newBullet->TargetInitialize(bulletModel_, GetWorldPosition(), enemyWorldPos);
+				newBullet->SetRotate(railCamera_->GetWorldTransform().rotation_);
 				// 弾を登録する
 				bullets_.push_back(newBullet);
 
@@ -315,9 +319,8 @@ void Player::BulletInitialize(float bulletSpeed, Vector3 worldPosition, Vector3 
 	velocity = Multiply(bulletSpeed, Normalize(velocity));
 	// 弾を生成し、初期化
 	PlayerBullet* newBullet = new PlayerBullet();
-	//newBullet->SetParent(worldTransform_.parent_);
-	//Vector3 bulletPosition = Transform(worldTransform_.translation_, railCamera_->GetViewProjection().matView);
-	newBullet->Initialize(model_, GetWorldPosition(), velocity);
+	newBullet->Initialize(bulletModel_, GetWorldPosition(), velocity);
+	newBullet->SetRotate(railCamera_->GetWorldTransform().rotation_);
 
 	// 弾を登録する
 	bullets_.push_back(newBullet);
@@ -332,7 +335,7 @@ float Player::GetRadius() { return 1.0f; }
 
 void Player::Draw(ViewProjection& viewProjection) {
 	// 3Dモデルを描画
-	model_->Draw(worldTransform_, viewProjection, textureHandle_);
+	playerModel_->Draw(worldTransform_, viewProjection);
 	//model_->Draw(worldTransform3DReticle_, viewProjection, textureHandle_);
 	// 弾描画
 	for (PlayerBullet* bullet : bullets_) {

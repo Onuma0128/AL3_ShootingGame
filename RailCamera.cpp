@@ -8,10 +8,15 @@ void RailCamera::Initialize() {
 	worldTransform_.translation_ = {0, 0, 0};
 	worldTransform_.rotation_ = {0, 0, 0};
 	rotate_ = 0;
-	//worldTransform_.matWorld_ = Inverse(view.matView);
 	// ビュープロジェクションの初期化
 	viewProjection_.farZ = 1000;
 	viewProjection_.Initialize();
+}
+
+void RailCamera::PlayerDamageInitialze() {
+	cameraDefaultPos_ = worldTransform_.translation_;
+	isPlayerDamage_ = true;
+	randTime_ = 0.5f;
 }
 
 void RailCamera::SetTarget(const Vector3 target) { target_ = target; }
@@ -19,6 +24,7 @@ void RailCamera::SetTarget(const Vector3 target) { target_ = target; }
 void RailCamera::SetRotate(const float rotate) { rotate_ = rotate; }
 
 void RailCamera::Update() {
+	PlayerDamageUpdate();
 	Vector3 move{0.0f, 0.0f, 0.0f};
 	Vector3 rad{0.0f, 0.0f, 0.0f};
 	// カメラの回転の速さ
@@ -41,4 +47,22 @@ void RailCamera::Update() {
 	ImGui::DragFloat3("translation", &worldTransform_.translation_.x, 0.01f);
 	ImGui::DragFloat3("rotation", &worldTransform_.rotation_.x, 0.01f);
 	ImGui::End();
+}
+
+void RailCamera::PlayerDamageUpdate() {
+	float shakeIntensity = 0.1f;
+	if (isPlayerDamage_ && randTime_ > 0) {
+		randTime_ -= 1.0f / 60.0f;
+		float scale = randTime_ / (30.0f / 60.0f);
+		Vector3 playerRand { 
+			.x = (rand() % 11 - 5) * shakeIntensity * scale,
+			.y = (rand() % 11 - 5) * shakeIntensity * scale,
+			.z = 0
+		};
+		worldTransform_.translation_ = Add(worldTransform_.translation_, playerRand);
+	}
+	if (randTime_ <= 0) {
+		isPlayerDamage_ = false;
+		worldTransform_.translation_ = cameraDefaultPos_;
+	}
 }

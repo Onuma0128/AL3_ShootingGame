@@ -26,7 +26,7 @@ public:
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	void Initialize(Model* model, uint32_t textureHandle,Vector3 playerPos);
+	void Initialize(Model* model,Vector3 playerPos);
 	void BulletInitialize(float bulletSpeed, Vector3 worldPosition, Vector3 velocity);
 	// ワールド座標を取得
 	Vector3 GetWorldPosition() override;
@@ -38,6 +38,7 @@ public:
 	void SetParent(const WorldTransform* parent);
 	void SetEnemy(std::list<Enemy*> enemy) { enemys_ = enemy; }
 	void SetRailCamera(RailCamera* railCamera) { railCamera_ = railCamera; }
+	void SetBulletModel(Model* model) { bulletModel_ = model; }
 	void onCollisionBullet(float i) { targetReticleTima_ += i; }
 
 	/// <summary>
@@ -80,9 +81,8 @@ private:
 	bool playerRightRotate_;
 	float rotateRightTime_;
 	// モデル
-	Model* model_ = nullptr;
-	// テクスチャハンドル
-	uint32_t textureHandle_ = 0u;
+	Model* playerModel_ = nullptr;
+	Model* bulletModel_ = nullptr;
 	// キーボード入力
 	Input* input_ = nullptr;
 	//複数弾

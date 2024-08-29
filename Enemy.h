@@ -32,6 +32,7 @@ public:
 	void Initialize(Model* model, uint32_t textureHandle);
 	void SetPlayer(Player* player) { player_ = player; }
 	void SetEnemyPosition(const Vector3& pos);
+	void setEnemyRotate(const Vector3& rotate);
 	void SetEnemySpeed(const Vector3& move);
 	// ワールド座標を取得
 	Vector3 GetWorldPosition() override;

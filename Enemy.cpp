@@ -29,6 +29,8 @@ void Enemy::Initialize(Model* model, uint32_t textureHandle) {
 
 void Enemy::SetEnemyPosition(const Vector3& pos) { worldTransform_.translation_ = pos; }
 
+void Enemy::setEnemyRotate(const Vector3& rotate) { worldTransform_.rotation_ = rotate; }
+
 void Enemy::SetEnemySpeed(const Vector3& move) { move_ = move; }
 
 Vector3 Enemy::GetWorldPosition() { 
@@ -53,10 +55,6 @@ void Enemy::Update(const ViewProjection& viewProjection) {
 	Vector3 positionEnemy = Transform(worldTransform_.translation_, matViewProjectionViewport);
 	spriteTargetReticle_->SetPosition(Vector2(positionEnemy.x, positionEnemy.y));
 	spriteTargetReticle_->SetColor(Vector4{1.0f, 0.0f, 0.0f, 1.0f});
-
-	ImGui::Begin("enemy");
-	ImGui::Text("%f,%f,%f", move_.x, move_.y, move_.z);
-	ImGui::End();
 }
 
 void Enemy::ChangeState(std::unique_ptr<BaseEnemyState> state) { state_ = std::move(state); }
@@ -74,7 +72,7 @@ bool Enemy::GetIsTargetingEnemy() { return isTargetingEnemy_; }
 
 void Enemy::Draw(ViewProjection& viewProjection) {
 	// 3Dモデルを描画
-	model_->Draw(worldTransform_, viewProjection, textureHandle_);
+	model_->Draw(worldTransform_, viewProjection);
 }
 
 void Enemy::DrawUI() {

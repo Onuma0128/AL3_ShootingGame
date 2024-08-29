@@ -17,6 +17,7 @@ public:
 	// ワールド座標を取得
 	Vector3 GetWorldPosition() override;
 	void SetParent(const WorldTransform* parent);
+	void SetRotate(const Vector3 rotate);
 	bool GetIsTarget() { return isTargeting_; }
 	void SetTargetPosition(const Vector3& position);
 
@@ -35,8 +36,6 @@ private:
 	WorldTransform worldTransform_;
 	// モデルのポインター
 	Model* model_ = nullptr;
-	// テクスチャハンドル
-	uint32_t textureHandle_ = 0u;
 	//弾の速度
 	Vector3 velocity_;
 	// ターゲット座標

@@ -30,8 +30,6 @@ private:
 	WorldTransform worldTransform_;
 	// モデルのポインター
 	Model* model_ = nullptr;
-	// テクスチャハンドル
-	uint32_t textureHandle_ = 0u;
 	// 弾の速度
 	Vector3 velocity_;
 	// 弾の寿命

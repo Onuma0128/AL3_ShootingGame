@@ -6,8 +6,6 @@ void EnemyBullet::Initialize(Model* model, const Vector3& position, const Vector
 	// NULLポインタチェック
 	assert(model);
 	model_ = model;
-	// テクスチャ読み込み
-	textureHandle_ = TextureManager::Load("Block.png");
 
 	worldTransform_.Initialize();
 	// 引数で受け取った初期座標をセット
@@ -15,7 +13,7 @@ void EnemyBullet::Initialize(Model* model, const Vector3& position, const Vector
 	// 引数で受け取った速度をメンバ変数に代入
 	velocity_ = velocity;
 	// 敵の弾を引き伸ばす
-	worldTransform_.scale_ = {0.5f, 0.5f, 3.0f};
+	worldTransform_.scale_ = {0.5f, 0.5f, 1.5f};
 }
 
 Vector3 EnemyBullet::GetWorldPosition() { 
@@ -55,5 +53,5 @@ void EnemyBullet::onCollision() { isDead_ = true; }
 float EnemyBullet::GetRadius() { return 1.0f; }
 
 void EnemyBullet::Draw(const ViewProjection& viewProjection) { 
-	model_->Draw(worldTransform_, viewProjection, textureHandle_);
+	model_->Draw(worldTransform_, viewProjection);
 }

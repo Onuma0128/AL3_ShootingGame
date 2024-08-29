@@ -92,11 +92,14 @@ private:
 	ViewProjection viewProjection_;
 	// 自キャラ
 	Player* player_ = nullptr;
+	Model* playerModel_ = nullptr;
+	Model* playerBulletModel_ = nullptr;
 	//敵
 	Enemy* enemy_ = nullptr;
 	int32_t waitTime_;
 	bool waitEnemy_;
 	std::list<Enemy*> enemys_;
+	Model* enemyModel_ = nullptr;
 	//敵発生コマンド
 	std::stringstream enemyPopCommands_[6];
 	enum EnemyScene {
@@ -112,6 +115,7 @@ private:
 	void UpdateAndCheckScene(EnemyScene currentScene);
 	//  複数弾
 	std::list<EnemyBullet*> enemyBullets_;
+	Model* enemyBulletModel_ = nullptr;
 	// 発射タイマー
 	int32_t Timer_ = 0;
 	// デバッグカメラ有効

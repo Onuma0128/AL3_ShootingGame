@@ -9,6 +9,7 @@ public:
 	/// 初期化
 	/// </summary>
 	void Initialize();
+	void PlayerDamageInitialze();
 	const WorldTransform& GetWorldTransform() { return worldTransform_; }
 	const ViewProjection& GetViewProjection() { return viewProjection_; }
 	void SetTarget(const Vector3 target);
@@ -18,6 +19,7 @@ public:
 	/// 毎フレーム処理
 	/// </summary>
 	void Update();
+	void PlayerDamageUpdate();
 
 private:
 	// ワールド変換データ
@@ -28,4 +30,9 @@ private:
 	ViewProjection viewProjection_;
 
 	Input* input_ = nullptr;
+
+	// プレイヤーがダメージを受けた時用
+	Vector3 cameraDefaultPos_{};
+	float randTime_;
+	bool isPlayerDamage_ = false;
 };

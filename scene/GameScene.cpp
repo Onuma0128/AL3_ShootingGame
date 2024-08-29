@@ -10,6 +10,8 @@ GameScene::GameScene() {}
 GameScene::~GameScene() {
 	delete model_;
 	delete player_;
+	delete playerModel_;
+	delete playerBulletModel_;
 	delete debugCamera_;
 	delete skydome_;
 	delete modelSkydome_;
@@ -19,9 +21,11 @@ GameScene::~GameScene() {
 	for (Enemy* enemy : enemys_) {
 		delete enemy;
 	}
+	delete enemyModel_;
 	for (EnemyBullet* bullet : enemyBullets_) {
 		delete bullet;
 	}
+	delete enemyBulletModel_;
 	for (Particle* particle : particles_) {
 		delete particle;
 	}
@@ -46,10 +50,6 @@ void GameScene::Initialize() {
 	player_ = new Player();
 	// デバッグカメラの生成
 	debugCamera_ = new DebugCamera(1280, 720);
-	//// 軸方向表示の表示を有効にする
-	//AxisIndicator::GetInstance()->SetVisible(true);
-	//// 軸方向表示が参照するビュープロジェクションを指定する
-	//AxisIndicator::GetInstance()->SetTargetViewProjection(&viewProjection_);
 	// 天球の生成
 	skydome_ = new Skydome();
 	// 3Dモデルの生成
@@ -63,8 +63,14 @@ void GameScene::Initialize() {
 	player_->SetParent(&railCamera_->GetWorldTransform());
 	// 自キャラの初期化
 	Vector3 playerPosition(0, 0, 50);
-	player_->Initialize(model_, textureHandle_, playerPosition);
+	playerModel_ = Model::CreateFromOBJ("playerJet", true);
+	playerBulletModel_ = Model::CreateFromOBJ("playerBullet", true);
+	player_->Initialize(playerModel_, playerPosition);
+	player_->SetBulletModel(playerBulletModel_);
 	player_->SetRailCamera(railCamera_);
+	// 敵のモデル
+	enemyModel_ = Model::CreateFromOBJ("enemyJet", true);
+	enemyBulletModel_ = Model::CreateFromOBJ("enemyBullet", true);
 
 	// ファイル読み込み
 	enemyDataFilePath_[0] = "Resources/enemyPop/enemyPop1.csv";
@@ -168,13 +174,20 @@ void GameScene::UpdateEnemyPopCommands(std::stringstream& enemyPopCommands) {
 			//ここに敵の座標を初期化する処理
 			// 敵の生成
 			enemy_ = new Enemy();
-			enemy_->Initialize(model_, textureHandle_);
+			enemy_->Initialize(enemyModel_, textureHandle_);
 			enemy_->SetGameScene(this);
 			enemy_->SetPlayer(player_);
 			enemy_->SetEnemyPosition(Vector3(x, y, z));
 			Vector3 moveVelocity = Subtract(railCamera_->GetWorldTransform().translation_, Vector3(x, y, z));
 			moveVelocity = Normalize(moveVelocity) * 0.05f;
 			enemy_->SetEnemySpeed(moveVelocity);
+			// プレイヤーの向きに回転
+			Vector3 rotate{};
+			rotate.y = std::atan2(moveVelocity.x, moveVelocity.z);
+			Matrix4x4 rotateMatrixY = MakeRotateYMatrix(-rotate.y);
+			Vector3 velocityZ = Transform(moveVelocity, rotateMatrixY);
+			rotate.x = std::atan2(-velocityZ.y, velocityZ.z);
+			enemy_->setEnemyRotate(rotate);
 			enemys_.push_back(enemy_);
 
 			miniMap_ = new MiniMap();
@@ -219,6 +232,10 @@ void GameScene::Update() {
 	viewProjection_.matView = railCamera_->GetViewProjection().matView;
 	viewProjection_.matProjection = railCamera_->GetViewProjection().matProjection;
 	viewProjection_.TransferMatrix();
+
+	if (player_->IsDead()) {
+		railCamera_->PlayerDamageInitialze();
+	}
 
 	// 天球の更新
 	skydome_->Update();
@@ -425,7 +442,7 @@ void GameScene::Fire() {
 
 		EnemyBullet* newBullet = new EnemyBullet();
 		newBullet->SetPlayer(player_);
-		newBullet->Initialize(model_, enemy->GetWorldPosition(), velocity);
+		newBullet->Initialize(enemyBulletModel_, enemy->GetWorldPosition(), velocity);
 
 		enemyBullets_.push_back(newBullet);
 	}
