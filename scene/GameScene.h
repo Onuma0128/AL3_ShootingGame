@@ -37,6 +37,8 @@ public: // メンバ関数
 	/// </summary>
 	void Initialize();
 	bool IsFinished() const { return finished_; }
+	uint32_t GetGameSceneBGM() const { return voiceHandle_; }
+	float GetGameScore() const { return gameScore_; }
 
 	void EnemySceneInitialize();
 	/// <summary>
@@ -79,11 +81,15 @@ public: // メンバ関数
 
 private:
 	// 終了フラグ
+	float gameScore_ = 0;
 	bool finished_ = false;
 	// メンバ変数
 	DirectXCommon* dxCommon_ = nullptr;
 	Input* input_ = nullptr;
 	Audio* audio_ = nullptr;
+	// ゲームシーンのBGM
+	uint32_t gameSceneBGM_ = 0;
+	uint32_t voiceHandle_ = 0;
 	// テクスチャハンドル
 	uint32_t textureHandle_ = 0;
 	// 3Dモデルデータ
@@ -96,6 +102,7 @@ private:
 	Model* playerBulletModel_ = nullptr;
 	//敵
 	Enemy* enemy_ = nullptr;
+	uint32_t enemyExplosionSound_ = 0;
 	int32_t waitTime_;
 	bool waitEnemy_;
 	std::list<Enemy*> enemys_;

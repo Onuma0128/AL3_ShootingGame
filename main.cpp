@@ -6,14 +6,17 @@
 #include "PrimitiveDrawer.h"
 #include "TextureManager.h"
 #include "TitleScene.h"
+#include "GameOver.h"
 #include "WinApp.h"
 
-GameScene* gameScene = nullptr;
 TitleScene* titleScene = nullptr;
+GameScene* gameScene = nullptr;
+GameOver* gameOver = nullptr;
 enum class Scene {
 	kUnknown = 0,
 	kTitle,
 	kGame,
+	kGameOver,
 };
 Scene scene = Scene::kUnknown;
 
@@ -33,7 +36,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
 	// ゲームウィンドウの作成
 	win = WinApp::GetInstance();
-	win->CreateGameWindow(L"LE2A_04_オオヌマ_リオ_旋回");
+	win->CreateGameWindow(L"LE2A_04_オオヌマ_リオ_センカイ");
 
 	// DirectX初期化処理
 	dxCommon = DirectXCommon::GetInstance();
@@ -110,6 +113,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	}
 
 	// 各種解放
+	delete titleScene;
 	delete gameScene;
 	// 3Dモデル解放
 	Model::StaticFinalize();
@@ -137,9 +141,22 @@ void ChangeScene() {
 		break;
 	case Scene::kGame:
 		if (gameScene->IsFinished()) {
-			scene = Scene::kTitle;
+			scene = Scene::kGameOver;
+			// ゲームシーンの初期化
+			gameOver = new GameOver();
+			gameOver->Initialize();
+			gameOver->SetGameScore(gameScene->GetGameScore());
+			gameOver->SetGameSceneBGM(gameScene->GetGameSceneBGM());
+
 			delete gameScene;
 			gameScene = nullptr;
+		}
+		break;
+	case Scene::kGameOver:
+		if (gameOver->IsFinished()) {
+			scene = Scene::kTitle;
+			delete gameOver;
+			gameOver = nullptr;
 			// ゲームシーンの初期化
 			titleScene = new TitleScene();
 			titleScene->Initialize();
@@ -156,6 +173,9 @@ void UpdateScene() {
 	case Scene::kGame:
 		gameScene->Update();
 		break;
+	case Scene::kGameOver:
+		gameOver->Update();
+		break;
 	}
 }
 
@@ -166,6 +186,9 @@ void DrawScene() {
 		break;
 	case Scene::kGame:
 		gameScene->Draw();
+		break;
+	case Scene::kGameOver:
+		gameOver->Draw();
 		break;
 	}
 }

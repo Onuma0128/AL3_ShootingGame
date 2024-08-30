@@ -12,9 +12,12 @@ Player::~Player() {
 	delete sprite2DReticle_;
 	delete spriteGauge_;
 	delete spriteGaugeFrame_;
+	delete spriteHitu_;
+	delete spriteHPGauge_;
+	delete spriteHPGaugeFrame_;
 }
 
-void Player::Initialize(Model* model, Vector3 playerPos) {
+void Player::Initialize(Model* model, Vector3 playerPos, Audio* audio) {
 	// NULLポインタチェック
 	assert(model);
 	playerModel_ = model;
@@ -36,13 +39,27 @@ void Player::Initialize(Model* model, Vector3 playerPos) {
 	targetReticleTima_ = 1.0f;
 	isTargetingEnemy_ = false;
 	// ゲージ画像の初期化
-	uint32_t textureGauge[2] = {
+	uint32_t textureGauge[4] = {
 		TextureManager::Load("lockONGauge.png"),
-		TextureManager::Load("lockONGaugeFrame.png")
+		TextureManager::Load("lockONGaugeFrame.png"),
+		TextureManager::Load("hitu.png"),
+		TextureManager::Load("playerHPGauge.png")
 	};
-	spriteGauge_ = Sprite::Create(textureGauge[0], Vector2{48.0f, 652.0f}, Vector4{1.0f, 1.0f, 1.0f, 1.0f}, Vector2{0.5f, 0.5f});
-	spriteGaugeFrame_ = Sprite::Create(textureGauge[1], Vector2{208.0f, 652.0f}, Vector4{1.0f, 1.0f, 1.0f, 1.0f}, Vector2{0.5f, 0.5f});
+	spriteHPGauge_ = Sprite::Create(textureGauge[3], Vector2{48.0f, 652.0f}, Vector4{1.0f, 1.0f, 1.0f, 1.0f}, Vector2{0.5f, 0.5f});
+	spriteHPGaugeFrame_ = Sprite::Create(textureGauge[1], Vector2{208.0f, 652.0f}, Vector4{1.0f, 1.0f, 1.0f, 1.0f}, Vector2{0.5f, 0.5f});
+	spriteHPGaugeFrame_->SetSize(Vector2{352, 72.0f});
+
+	spriteGauge_ = Sprite::Create(textureGauge[0], Vector2{48.0f, 68.0f}, Vector4{1.0f, 1.0f, 1.0f, 1.0f}, Vector2{0.5f, 0.5f});
+	spriteGaugeFrame_ = Sprite::Create(textureGauge[1], Vector2{208.0f, 68.0f}, Vector4{1.0f, 1.0f, 1.0f, 1.0f}, Vector2{0.5f, 0.5f});
+	spriteHitu_ = Sprite::Create(textureGauge[2], Vector2{48.0f, 56.0f}, Vector4{1.0f, 1.0f, 1.0f, 1.0f}, Vector2{0.5f, 0.5f});
 	spriteGaugeFrame_->SetSize(Vector2{352, 72.0f});
+	spriteHitu_->SetSize(Vector2{64.0f, 64.0f});
+
+	audio_ = audio;
+	bulletSound_ = audio_->LoadWave("sound/bullet.wav");
+	reticleSound_ = audio_->LoadWave("sound/reticle.wav");
+	playerDamage_ = audio_->LoadWave("sound/playerDamage.mp3");
+	avoidanceSound_ = audio_->LoadWave("sound/avoidance.mp3");
 }
 
 Vector3 Player::GetWorldPosition() { 
@@ -83,15 +100,18 @@ void Player::Update(const ViewProjection& viewProjection) {
 	ReticleCollision(viewProjection);
 
 	// PlayerParameterのImGui
-	PlayerParameter();
+	//PlayerParameter();
 
 	// 弾更新
 	for (PlayerBullet* bullet : bullets_) {
 		bullet->Update();
 	}
 	// ゲージバーの更新
-	spriteGauge_->SetPosition(Vector2{160.0f * targetReticleTima_ + 48.0f, 652.0f});
+	spriteGauge_->SetPosition(Vector2{160.0f * targetReticleTima_ + 48.0f, 68.0f});
 	spriteGauge_->SetSize(Vector2{320.0f * targetReticleTima_, 48.0f});
+
+	spriteHPGauge_->SetPosition(Vector2{16.0f * playerHP_ + 48.0f, 652.0f});
+	spriteHPGauge_->SetSize(Vector2{32.0f * playerHP_, 48.0f});
 	isDead_ = false;
 	if (playerHP_ <= 0) {
 		isDead_ = true;
@@ -113,9 +133,11 @@ void Player::Avoidance() {
 	if (!playerLeftRotate_ && !playerRightRotate_) {
 		if (isLBPressed && !wasLBPressed) {
 			playerLeftRotate_ = true;
+			audio_->PlayWave(avoidanceSound_, false, 0.3f);
 		}
 		if (isRBPressed && !wasRBPressed) {
 			playerRightRotate_ = true;
+			audio_->PlayWave(avoidanceSound_, false, 0.3f);
 		} 
 		if (Input::GetInstance()->GetJoystickState(0, joyState)) {
 			worldTransform_.rotation_.x = (float)joyState.Gamepad.sThumbLY / SHRT_MAX * -0.1f;
@@ -187,6 +209,7 @@ void Player::ReticleCollision(const ViewProjection& viewProjection) {
 		// Z座標が0以下なら視界外と判定
 		if (screenPositionEnemy.z <= 0.0f) {
 			enemy->SetIsTargetingEnemy(false);
+			enemy->SetHasPlayedReticleSound(false);
 			continue;
 		}
 		// スクリーン座標の衝突判定
@@ -197,6 +220,12 @@ void Player::ReticleCollision(const ViewProjection& viewProjection) {
 			if (targetReticleTima_ == 1.0f) {
 				isTargetingEnemy_ = true;
 				enemy->SetIsTargetingEnemy(isTargetingEnemy_);
+
+				// まだこの敵に対して音が再生されていない場合のみ再生する
+				if (!enemy->GetHasPlayedReticleSound()) {
+					audio_->PlayWave(reticleSound_, false, 0.04f);
+					enemy->SetHasPlayedReticleSound(true);
+				}
 			}
 		}
 		// セッターで入れた敵のフラグがtrueなら
@@ -306,6 +335,8 @@ void Player::TargetAttack() {
 
 				enemy->SetIsTargetingEnemy(false);
 				targetReticleTima_ = 0.0f;
+				bulletAttackNum_++;
+				audio_->PlayWave(bulletSound_, false, 0.01f);
 			}
 		}
 	}
@@ -324,10 +355,13 @@ void Player::BulletInitialize(float bulletSpeed, Vector3 worldPosition, Vector3 
 
 	// 弾を登録する
 	bullets_.push_back(newBullet);
+	bulletAttackNum_++;
+	audio_->PlayWave(bulletSound_, false, 0.02f);
 }
 
 void Player::onCollision() {
 	playerHP_--;
+	audio_->PlayWave(playerDamage_, false, 0.1f);
 	isDead_ = true;
 }
 
@@ -346,5 +380,8 @@ void Player::Draw(ViewProjection& viewProjection) {
 void Player::DrawUI() { 
 	spriteGaugeFrame_->Draw();
 	spriteGauge_->Draw();
+	spriteHitu_->Draw();
+	spriteHPGaugeFrame_->Draw();
+	spriteHPGauge_->Draw();
 	sprite2DReticle_->Draw();
 }

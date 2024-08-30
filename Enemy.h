@@ -57,6 +57,9 @@ public:
 	void SetIsTargetingEnemy(bool isTargetingEnemy) { isTargetingEnemy_ = isTargetingEnemy; }
 	bool GetIsTargetingEnemy();
 
+	void SetHasPlayedReticleSound(bool value) { hasPlayedReticleSound_ = value; }
+	bool GetHasPlayedReticleSound() const { return hasPlayedReticleSound_; }
+
 	/// <summary>
 	/// 弾発射
 	/// </summary>
@@ -78,6 +81,7 @@ private:
 	Vector3 move_;
 	// モデル
 	Model* model_ = nullptr;
+	bool hasPlayedReticleSound_ = false;
 	// テクスチャハンドル
 	uint32_t textureHandle_ = 0u;
 	// 敵の状態

@@ -25,11 +25,8 @@ void PlayerBullet::TargetInitialize(Model* model, const Vector3& position, const
 	worldTransform_.scale_ = {0.5f, 0.5f, 1.5f};
 	// 引数で受け取った速度をメンバ変数に代入
 	targetPosition_ = targetPosition;
-	//targetPosition_ = targetPosition;
 	isTargeting_ = true;
-
 	lerpTimer_ = 0.0f;
-	//lerpDuration_ = 1.0f;
 }
 
 Vector3 PlayerBullet::GetWorldPosition() {
@@ -98,8 +95,6 @@ void PlayerBullet::Update() {
 		if (--deathTimer_ <= 0) {
 			isDead_ = true;
 		}
-
-		ImGui::Text("%f", targetLength);
 	}
 }
 

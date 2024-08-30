@@ -115,6 +115,7 @@
     <ClCompile Include="EnemyBullet.cpp" />
     <ClCompile Include="EnemyStateApproach.cpp" />
     <ClCompile Include="EnemyStateLeave.cpp" />
+    <ClCompile Include="GameOver.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MiniMap.cpp" />
     <ClCompile Include="MT3.cpp" />
@@ -157,6 +158,7 @@
     <ClInclude Include="EnemyBullet.h" />
     <ClInclude Include="EnemyStateApproach.h" />
     <ClInclude Include="EnemyStateLeave.h" />
+    <ClInclude Include="GameOver.h" />
     <ClInclude Include="input\Input.h" />
     <ClInclude Include="math\Matrix4x4.h" />
     <ClInclude Include="math\Vector2.h" />

@@ -7,6 +7,7 @@
 #include <list>
 #include <Sprite.h>
 #include <WinApp.h>
+#include <Audio.h>
 #include "Collider.h"
 
 class Enemy;
@@ -26,12 +27,13 @@ public:
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	void Initialize(Model* model,Vector3 playerPos);
+	void Initialize(Model* model, Vector3 playerPos, Audio* audio);
 	void BulletInitialize(float bulletSpeed, Vector3 worldPosition, Vector3 velocity);
 	// ワールド座標を取得
 	Vector3 GetWorldPosition() override;
 	const WorldTransform& GetWorldTransform() { return worldTransform_; }
 	Vector3 GetWorldReticlePosition();
+	float GetBulletAttackNum() { return bulletAttackNum_; }
 	/// <summary>
 	/// 親となるワールドトランスフォームをセット
 	/// </summary>
@@ -75,6 +77,8 @@ private:
 	// ワールド変換データ
 	WorldTransform worldTransform_;
 	bool isDead_ = false;
+	Sprite* spriteHPGauge_ = nullptr;
+	Sprite* spriteHPGaugeFrame_ = nullptr;
 	float playerHP_;
 	bool playerLeftRotate_;
 	float rotateLeftTime_;
@@ -85,13 +89,21 @@ private:
 	Model* bulletModel_ = nullptr;
 	// キーボード入力
 	Input* input_ = nullptr;
+	// サウンドデータ
+	Audio* audio_ = nullptr;
+	uint32_t bulletSound_ = 0;
+	uint32_t reticleSound_ = 0;
+	uint32_t playerDamage_ = 0;
+	uint32_t avoidanceSound_ = 0;
 	//複数弾
 	std::list<PlayerBullet*> bullets_;
+	float bulletAttackNum_ = 0;
 	//3Dレティクル用ワールドトランスフォーム
 	WorldTransform worldTransform3DReticle_;
 	// ロックオンゲージの画像
 	Sprite* spriteGauge_ = nullptr;
 	Sprite* spriteGaugeFrame_ = nullptr;
+	Sprite* spriteHitu_ = nullptr;
 	// ターゲットレティクルの待ち時間
 	float targetReticleTima_ = 0;
 	//敵をターゲットしているかどうか

@@ -1,7 +1,6 @@
 #include "RailCamera.h"
 #include "MT3.h"
 #include <algorithm>
-#include "ImGuiManager.h"
 
 void RailCamera::Initialize() {
 	// ワールドトランスフォームの初期化
@@ -42,11 +41,6 @@ void RailCamera::Update() {
 	worldTransform_.matWorld_ = MakeAfineMatrix(worldTransform_.scale_, worldTransform_.rotation_, worldTransform_.translation_);
 	//カメラオブジェクトのワールド行列からビュー行列を計算する
 	viewProjection_.matView = LookAt(worldTransform_.translation_, target_, {0.0f, 1.0f, 0.0f});
-
-	ImGui::Begin("Camera");
-	ImGui::DragFloat3("translation", &worldTransform_.translation_.x, 0.01f);
-	ImGui::DragFloat3("rotation", &worldTransform_.rotation_.x, 0.01f);
-	ImGui::End();
 }
 
 void RailCamera::PlayerDamageUpdate() {

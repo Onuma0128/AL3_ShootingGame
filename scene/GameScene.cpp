@@ -39,6 +39,9 @@ void GameScene::Initialize() {
 	dxCommon_ = DirectXCommon::GetInstance();
 	input_ = Input::GetInstance();
 	audio_ = Audio::GetInstance();
+	// ゲームシーンのBGMファイル
+	gameSceneBGM_ = audio_->LoadWave("bgm/gameBgm.mp3");
+	voiceHandle_ = audio_->PlayWave(gameSceneBGM_, true, 0.05f);
 	// ファイル名を指定してテクスチャを読み込む
 	textureHandle_ = TextureManager::Load("uvChecker.png");
 	// 3Dモデルデータの生成
@@ -65,12 +68,13 @@ void GameScene::Initialize() {
 	Vector3 playerPosition(0, 0, 50);
 	playerModel_ = Model::CreateFromOBJ("playerJet", true);
 	playerBulletModel_ = Model::CreateFromOBJ("playerBullet", true);
-	player_->Initialize(playerModel_, playerPosition);
+	player_->Initialize(playerModel_, playerPosition, audio_);
 	player_->SetBulletModel(playerBulletModel_);
 	player_->SetRailCamera(railCamera_);
 	// 敵のモデル
 	enemyModel_ = Model::CreateFromOBJ("enemyJet", true);
 	enemyBulletModel_ = Model::CreateFromOBJ("enemyBullet", true);
+	enemyExplosionSound_ = audio_->LoadWave("sound/enemyExplosion.mp3");
 
 	// ファイル読み込み
 	enemyDataFilePath_[0] = "Resources/enemyPop/enemyPop1.csv";
@@ -244,6 +248,7 @@ void GameScene::Update() {
 
 	if (player_->IsDead()) {
 		finished_ = true;
+		gameScore_ -= player_->GetBulletAttackNum();
 	}
 	
 	// 当たり判定
@@ -282,6 +287,8 @@ void GameScene::Update() {
 				enemy->GetWorldPosition(), 10, 60);
 			particles_.push_back(newParticle);
 			player_->onCollisionBullet(1.0f / 90.0f);
+			gameScore_ += 100;
+			audio_->PlayWave(enemyExplosionSound_, false, 0.03f);
 		}
 	}
 	// 敵弾の更新とパーティクルの初期化
