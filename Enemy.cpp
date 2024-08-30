@@ -4,7 +4,6 @@
 #include <cassert>
 #include "EnemyStateApproach.h"
 #include "EnemyStateLeave.h"
-#include "imgui.h"
 
 Enemy::~Enemy() { 
 	delete spriteTargetReticle_;
@@ -63,6 +62,7 @@ void Enemy::EnemyMove(const Vector3& move) { worldTransform_.translation_ = Add(
 
 void Enemy::onCollision() { 
 	isDead_ = true; 
+	worldTransform_.scale_ = {0, 0, 0};
 	isTargetingEnemy_ = false;
 }
 

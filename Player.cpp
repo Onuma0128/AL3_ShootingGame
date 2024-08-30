@@ -1,5 +1,4 @@
 #include "Player.h"
-#include "ImGuiManager.h"
 #include <cassert>
 #include "Enemy.h"
 #include "RailCamera.h"
@@ -98,9 +97,6 @@ void Player::Update(const ViewProjection& viewProjection) {
 
 	// ReticleとEnemyの当たり判定
 	ReticleCollision(viewProjection);
-
-	// PlayerParameterのImGui
-	//PlayerParameter();
 
 	// 弾更新
 	for (PlayerBullet* bullet : bullets_) {
@@ -214,8 +210,7 @@ void Player::ReticleCollision(const ViewProjection& viewProjection) {
 		}
 		// スクリーン座標の衝突判定
 		bool isColliding = CheckCollisionCircleCircle(Vector3{spritePosition_.x, spritePosition_.y, 0.0f}, 16, positionEnemy, 16);
-		if (isColliding) {
-			worldTransform3DReticle_.translation_ = enemy->GetWorldPosition();
+		if (isColliding && positionEnemy.z < 1.0f) {
 			sprite2DReticle_->SetColor(Vector4{1.0f, 0.0f, 0.0f, 1.0f});
 			if (targetReticleTima_ == 1.0f) {
 				isTargetingEnemy_ = true;
@@ -244,30 +239,6 @@ void Player::ReticleCollision(const ViewProjection& viewProjection) {
 	}
 }
 
-void Player::PlayerParameter() {
-	// PlayerParameter
-	ImGui::Begin("GameParameter");
-	// Player
-	ImGui::Text("Player");
-	ImGui::Text("x:%f,y:%f,z:%f,HP%f",
-		GetWorldPosition().x,
-		GetWorldPosition().y,
-		GetWorldPosition().z,
-		playerHP_
-	);
-	ImGui::Text("left:%f,%d\n,right:%f,%d", rotateLeftTime_, playerLeftRotate_, rotateRightTime_, playerRightRotate_);
-
-	ImGui::Text("targetReticleTima\n%f", targetReticleTima_);
-	// PlayerReticle
-	ImGui::Text("Reticle3D");
-	ImGui::Text("x:%f,y:%f,z:%f", 
-		worldTransform3DReticle_.translation_.x, 
-		worldTransform3DReticle_.translation_.y, 
-		worldTransform3DReticle_.translation_.z
-	);
-	ImGui::End();
-}
-
 void Player::Attack(const ViewProjection& viewProjection) {
 	XINPUT_STATE joyState;
 	// 前フレームでのRBボタンの状態を記録
@@ -282,7 +253,7 @@ void Player::Attack(const ViewProjection& viewProjection) {
 		// 弾の速度
 		const float kBulletSpeed = 1.0f;
 		Vector3 velocity(0, 0, kBulletSpeed);
-		Vector3 targetPosition = {};
+		Vector3 targetPosition = GetWorldReticlePosition();
 		bool isColliding = false;
 		// ビュー行列とプロジェクション行列、ビューポート行列を合成する
 		Matrix4x4 matViewport = MakeViewportMatrix(0, 0, WinApp::kWindowWidth, WinApp::kWindowHeight, 0.0f, 1.0f);
@@ -294,18 +265,14 @@ void Player::Attack(const ViewProjection& viewProjection) {
 			positionEnemy = Transform(positionEnemy, matViewProjectionViewport);
 			// スクリーン座標の衝突判定
 			isColliding = CheckCollisionCircleCircle(Vector3{spritePosition_.x, spritePosition_.y, 0.0f}, 16, positionEnemy, 16);
-			if (isColliding) {
+			if (isColliding && positionEnemy.z < 1.0f) {
 				isColliding = true;
 				targetPosition = enemy->GetWorldPosition();
 				break;
 			}
 		}
 		// 弾を生成し、初期化
-		if (isColliding) {
-			BulletInitialize(kBulletSpeed, targetPosition, velocity);
-		} else {
-			BulletInitialize(kBulletSpeed, GetWorldReticlePosition(), velocity);
-		}
+		BulletInitialize(kBulletSpeed, targetPosition, velocity);
 	}
 	wasRBPressed = isRBPressed;
 }
@@ -370,7 +337,7 @@ float Player::GetRadius() { return 1.0f; }
 void Player::Draw(ViewProjection& viewProjection) {
 	// 3Dモデルを描画
 	playerModel_->Draw(worldTransform_, viewProjection);
-	//model_->Draw(worldTransform3DReticle_, viewProjection, textureHandle_);
+	//playerModel_->Draw(worldTransform3DReticle_, viewProjection);
 	// 弾描画
 	for (PlayerBullet* bullet : bullets_) {
 		bullet->Draw(viewProjection);

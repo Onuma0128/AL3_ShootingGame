@@ -1,5 +1,4 @@
 #include "Particle.h"
-#include <imgui.h>
 #include <algorithm>
 
 void Particle::Initialize(Model* model, uint32_t textureHandle, Vector3 Position, uint32_t particleNum, float particleTime) {

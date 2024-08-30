@@ -1,5 +1,4 @@
 #include "MiniMap.h"
-#include <imgui.h>
 
 MiniMap::~MiniMap() { delete sprite_; }
 
@@ -23,7 +22,7 @@ void MiniMap::Update() {
 	sprite_->SetRotation(world_->rotation_.y);
 	sprite_->SetPosition(spritePosition);
 
-	if (sprite_->GetPosition().y > 1000000) {
+	if (world_->scale_.x == 0) {
 		isDraw = false;
 	}
 }

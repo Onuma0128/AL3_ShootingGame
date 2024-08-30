@@ -49,7 +49,6 @@ public:
 	void Update(const ViewProjection& viewProjection);
 	void ReticleUpdate(const ViewProjection& viewProjection);
 	void ReticleCollision(const ViewProjection& viewProjection);
-	void PlayerParameter();
 	// 攻撃
 	void Attack(const ViewProjection& viewProjection);
 	void TargetAttack();

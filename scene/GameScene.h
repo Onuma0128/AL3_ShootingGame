@@ -108,7 +108,7 @@ private:
 	std::list<Enemy*> enemys_;
 	Model* enemyModel_ = nullptr;
 	//敵発生コマンド
-	std::stringstream enemyPopCommands_[6];
+	std::stringstream enemyPopCommands_[9];
 	enum EnemyScene {
 		Stage1,
 		Stage2,
@@ -116,9 +116,12 @@ private:
 		Stage4,
 		Stage5,
 		Stage6,
+		Stage7,
+		Stage8,
+		Stage9,
 	};
 	EnemyScene enemyScene = EnemyScene::Stage1;
-	std::string enemyDataFilePath_[6] = {};
+	std::string enemyDataFilePath_[9] = {};
 	void UpdateAndCheckScene(EnemyScene currentScene);
 	//  複数弾
 	std::list<EnemyBullet*> enemyBullets_;

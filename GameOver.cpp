@@ -1,6 +1,5 @@
 #include "GameOver.h"
 #include <algorithm> 
-#include "imgui.h"
 
 GameOver::~GameOver() {
 	delete spriteScoreScene_;

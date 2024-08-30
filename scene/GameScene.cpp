@@ -3,7 +3,6 @@
 #include "TextureManager.h"
 #include <fstream>
 #include <cassert>
-#include "imgui.h"
 
 GameScene::GameScene() {}
 
@@ -83,7 +82,11 @@ void GameScene::Initialize() {
 	enemyDataFilePath_[3] = "Resources/enemyPop/enemyPop4.csv";
 	enemyDataFilePath_[4] = "Resources/enemyPop/enemyPop5.csv";
 	enemyDataFilePath_[5] = "Resources/enemyPop/enemyPop6.csv";
+	enemyDataFilePath_[6] = "Resources/enemyPop/enemyPop7.csv";
+	enemyDataFilePath_[7] = "Resources/enemyPop/enemyPop8.csv";
+	enemyDataFilePath_[8] = "Resources/enemyPop/enemyPop9.csv";
 	EnemySceneInitialize();
+	enemyScene = EnemyScene::Stage1;
 	//レティクルのテクスチャ
 	TextureManager::Load("2dReticle.png");
 	modelParticle_ = Model::CreateFromOBJ("enemyExplosion", true);
@@ -101,7 +104,7 @@ void GameScene::Initialize() {
 }
 
 void GameScene::EnemySceneInitialize() {
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < 9; i++) {
 		enemyPopCommands_[i].clear();
 		enemyPopCommands_[i].str("");
 		LoadEnemyPopData(enemyDataFilePath_[i], enemyPopCommands_[i]);
@@ -126,6 +129,15 @@ void GameScene::RandomEnemyScene(int i) {
 	}
 	if (i == 6) {
 		enemyScene = EnemyScene::Stage6;
+	}
+	if (i == 7) {
+		enemyScene = EnemyScene::Stage7;
+	}
+	if (i == 8) {
+		enemyScene = EnemyScene::Stage8;
+	}
+	if (i == 9) {
+		enemyScene = EnemyScene::Stage9;
 	}
 }
 
@@ -274,6 +286,15 @@ void GameScene::Update() {
 	case EnemyScene::Stage6:
 		UpdateEnemyPopCommands(enemyPopCommands_[5]);
 		break;
+	case EnemyScene::Stage7:
+		UpdateEnemyPopCommands(enemyPopCommands_[6]);
+		break;
+	case EnemyScene::Stage8:
+		UpdateEnemyPopCommands(enemyPopCommands_[7]);
+		break;
+	case EnemyScene::Stage9:
+		UpdateEnemyPopCommands(enemyPopCommands_[8]);
+		break;
 	default:
 		break;
 	}
@@ -321,6 +342,9 @@ void GameScene::Update() {
 	UpdateAndCheckScene(EnemyScene::Stage4);
 	UpdateAndCheckScene(EnemyScene::Stage5);
 	UpdateAndCheckScene(EnemyScene::Stage6);
+	UpdateAndCheckScene(EnemyScene::Stage7);
+	UpdateAndCheckScene(EnemyScene::Stage8);
+	UpdateAndCheckScene(EnemyScene::Stage9);
 
 	// デスフラグの立った敵を削除
 	enemys_.remove_if([](Enemy* enemy) {
@@ -362,7 +386,7 @@ void GameScene::Update() {
 
 void GameScene::UpdateAndCheckScene(EnemyScene currentScene) {
 	bool sceneChanged = false;
-	int enemySceneNum = 6;
+	int enemySceneNum = 9;
 
 	if (enemyScene == currentScene && !sceneChanged) {
 		for (Enemy* enemy : enemys_) {

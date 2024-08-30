@@ -1,7 +1,6 @@
 #include "Skydome.h"
 #include <cassert>
 #include "MT3.h"
-#include "imgui.h"
 
 void Skydome::Initialize(Model* model) {
 	assert(model);
