@@ -303,9 +303,9 @@ void Player::TargetAttack() {
 				enemy->SetIsTargetingEnemy(false);
 				targetReticleTima_ = 0.0f;
 				bulletAttackNum_++;
-				audio_->PlayWave(bulletSound_, false, 0.01f);
 			}
 		}
+		audio_->PlayWave(bulletSound_, false, 0.02f);
 	}
 	wasRBPressed = isRBPressed;
 }

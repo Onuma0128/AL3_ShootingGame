@@ -300,6 +300,7 @@ void GameScene::Update() {
 	}
 
 	// 敵の更新とパーティクルの初期化
+	bool isExplosionSound = false;
 	for (Enemy* enemy : enemys_) {
 		enemy->Update(railCamera_->GetViewProjection());
 		if (enemy->IsDead()) {
@@ -309,7 +310,10 @@ void GameScene::Update() {
 			particles_.push_back(newParticle);
 			player_->onCollisionBullet(1.0f / 90.0f);
 			gameScore_ += 100;
-			audio_->PlayWave(enemyExplosionSound_, false, 0.03f);
+			if (!isExplosionSound) {
+				audio_->PlayWave(enemyExplosionSound_, false, 0.03f);
+			}
+			isExplosionSound = true;
 		}
 	}
 	// 敵弾の更新とパーティクルの初期化
